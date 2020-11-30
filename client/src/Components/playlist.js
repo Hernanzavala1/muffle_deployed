@@ -11,6 +11,7 @@ class Playlist extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
+      user: null,
       playlist: this.props.playlist,
       modalShow: false,
       friends: [{ name: 'ryan Brener', id: "5faa29f181cddb09b45fcd81" }, { name: 'julia Furry', id: "5fac8c0341b6513ea83e9a12" }],
@@ -23,6 +24,11 @@ class Playlist extends React.Component {
     let length = (this.state.friends).length;
     var arr = Array(length).fill(false);
     this.setState({ checked: arr })
+    axios.post('/auth/getUser', { userId: this.props.userID }).then((res) => {
+      this.setState({ user: res.data.user })
+    }).catch((err) => {
+      console.log(err)
+    })
   }
 
   addToLibrary = () => {
@@ -38,8 +44,136 @@ class Playlist extends React.Component {
         console.log(error)
       });
   }
+  likePlaylist = () => {
+    if (this.state.user == null) {
+      return
+    }
 
+    var tempArr = []
+    Object.assign(tempArr, this.state.user.likedPlaylists)
+    console.log(this.state.user, "user")
+    console.log(tempArr, "array in liekd")
+    let result = null;
+    var i;
+    for (i = 0; i < tempArr.length; i++) {
+      if (tempArr[i].playlistId === this.state.playlist._id) {
+        result = tempArr[i];
+        break;
+      }
+    }
+    console.log(result, " found ")
+    if (result != null) {
+      if (result.isLiked) {
+        //change color of icon
+        tempArr.splice(i, 1);
+        axios.post('/auth/updateLikedPlaylist', { userId: this.state.user._id, likedPlaylists: tempArr }).then((res) => {
+          console.log("unliked here")
+          this.setState({ user: res.data.user }, (() => {
+            this.updateLikes(this.state.playlist.likes - 1)
+            // document.getElementById(this.state.playlist._id).style.color = "white"
+          }))
+
+        }).catch((err) => {
+          console.log(err)
+        })
+      }
+      else {
+        //change color of icon
+        tempArr[i].isLiked = true;
+        axios.post('/auth/updateLikedPlaylist', { userId: this.props.userID, likedPlaylists: tempArr }).then((res) => {
+          console.log("unliked here")
+          this.setState({ user: res.data.user }, (() => {
+            this.updateLikes(this.state.playlist.likes + 2)
+            // document.getElementById(this.state.playlist._id).style.color = "#007bff"
+            // document.getElementById(this.state.playlist._id+this.state.playlist._id).style.color = "white"
+          }))
+
+        }).catch((err) => {
+          console.log(err)
+        })
+      }
+
+    } else {
+      console.log(this.state.user._id, " in playlist")
+      //change color of icon => blue
+      tempArr.push({ playlistId: this.state.playlist._id, isLiked: true })
+      axios.post('/auth/updateLikedPlaylist', { userId: this.props.userID, likedPlaylists: tempArr }).then((res) => {
+        console.log("unliked here")
+        this.setState({ user: res.data.user }, (() => {
+          this.updateLikes(this.state.playlist.likes + 1)
+          // document.getElementById(this.state.playlist._id).style.color = "#007bff"
+        }))
+      }).catch((err) => {
+        console.log(err)
+      })
+    }
+  }
+  unlikePlaylist = () => {
+    if (this.state.user == null) {
+      return
+    }
+
+    var tempArr = []
+    Object.assign(tempArr, this.state.user.likedPlaylists)
+    console.log(this.state.user, "user")
+    console.log(tempArr, "array in liekd")
+    let result = null;
+    var i;
+    for (i = 0; i < tempArr.length; i++) {
+      if (tempArr[i].playlistId === this.state.playlist._id) {
+        result = tempArr[i];
+        break;
+      }
+    }
+    console.log(result, " found ")
+    if (result != null) {
+      if (!result.isLiked) {
+        //change color of icon
+        tempArr.splice(i, 1);
+        axios.post('/auth/updateLikedPlaylist', { userId: this.state.user._id, likedPlaylists: tempArr }).then((res) => {
+          console.log("unliked here")
+          this.setState({ user: res.data.user }, (() => {
+            this.updateLikes(this.state.playlist.likes + 1)
+            // document.getElementById(this.state.playlist._id+this.state.playlist._id).style.color = "white"
+          }))
+
+        }).catch((err) => {
+          console.log(err)
+        })
+      }
+      else {
+        //change color of icon
+        tempArr[i].isLiked = false;
+        axios.post('/auth/updateLikedPlaylist', { userId: this.props.userID, likedPlaylists: tempArr }).then((res) => {
+          console.log("unliked here")
+          this.setState({ user: res.data.user }, (() => {
+            this.updateLikes(this.state.playlist.likes - 2)
+            // document.getElementById(this.state.playlist._id+this.state.playlist._id).style.color = "#007bff"
+            // document.getElementById(this.state.playlist._id).style.color = "white"
+          }))
+
+        }).catch((err) => {
+          console.log(err)
+        })
+      }
+
+    } else {
+      console.log(this.state.user._id, " in playlist")
+      //change color of icon => blue
+      tempArr.push({ playlistId: this.state.playlist._id, isLiked: false })
+      axios.post('/auth/updateLikedPlaylist', { userId: this.props.userID, likedPlaylists: tempArr }).then((res) => {
+        console.log("unliked here")
+        this.setState({ user: res.data.user }, (() => {
+          this.updateLikes(this.state.playlist.likes - 1)
+          // document.getElementById(this.state.playlist._id+this.state.playlist._id).style.color = "#007bff"
+        }))
+      }).catch((err) => {
+        console.log(err)
+      })
+    }
+  }
   updateLikes = (likes) => {
+
     console.log("In likes")
     console.log("likes: ", this.state.playlist.likes);
     if (likes < 0) {
@@ -111,11 +245,33 @@ class Playlist extends React.Component {
   }
 
   render() {
+    if(this.state.user == null) {
+      return <div>Loading</div>
+    }
 
+    var colorL = "white", colorD = "white";
+    var tempArr = []
+      Object.assign(tempArr, this.state.user.likedPlaylists)
+      let result = null;
+      var i;
+      for (i = 0; i < tempArr.length; i++) {
+        if (tempArr[i].playlistId === this.state.playlist._id) {
+          result = tempArr[i];
+          break;
+        }
+      }
+      if (result != null) {
+        if (result.isLiked) {
+          colorL = "#007bff"
+        }
+        else {
+          colorD = "#007bff"
+        }
+      }
 
     return (
       <div>
-        <Link to={`/publicPlayer/${this.props.playlist._id}`}>
+        <Link to={{pathname: `/publicPlayer/${this.props.playlist._id}`, state: {source: '/home'}}}>
           <div className="cardsWrapInner">
             <div className="home-card" >
               <div className="cardImage">
@@ -123,11 +279,11 @@ class Playlist extends React.Component {
                 <div className="hoverContainer">
                   <div style={{ "marginBottom": "10px" }} className="first">
                     <Link onClick={this.addToLibrary}><i className="fas fa-plus-circle" style={{ "marginRight": "10px", "fontSize": "2rem", "color": "white" }}></i></Link>
-                    <Link onClick={() => this.updateLikes(this.state.playlist.likes + 1)}><i className="fa fa-thumbs-up" style={{ "fontSize": "2rem", "color": "white" }}></i></Link>
+                    <Link onClick={() => this.likePlaylist()}><i id={this.state.playlist._id} className="fa fa-thumbs-up" style={{ "fontSize": "2rem", "color": `${colorL}` }}></i></Link>
                   </div>
                   <div className="second">
                     <Link > <i onClick={(e) => { this.handleModal(e, true) }} className="fa fa-share-alt" style={{ "marginRight": "10px", "fontSize": "2rem", "color": "white" }}></i></Link>
-                    <Link onClick={() => this.updateLikes(this.state.playlist.likes - 1)}><i className="fa fa-thumbs-down" style={{ "fontSize": "2rem", "color": "white" }}></i></Link>
+                    <Link onClick={() => this.unlikePlaylist()}><i id={this.state.playlist._id + this.state.playlist._id}  className="fa fa-thumbs-down" style={{ "fontSize": "2rem", "color": `${colorD}` }}></i></Link>
                   </div>
                 </div>
               </div>

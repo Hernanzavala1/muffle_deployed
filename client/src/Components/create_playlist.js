@@ -110,6 +110,12 @@ class create_playlist extends React.Component {
         x.then(res => {
             console.log("all the response")
             console.log(res)
+
+            if(res.data.tracks.items.length <= 0) {
+                this.setState({ results: [] })
+                return
+            }
+
             this.setState({ tracks: res.data.tracks.items[0].id })
             // return searchInstance.get(`/artists/${artistId}/top-tracks`, {params:{country:'US'}})
 
@@ -210,6 +216,10 @@ class create_playlist extends React.Component {
                 axios.post('/auth/addPlaylist', { userId: this.state.userId, playlistId: res.data.playlist._id })
                     .then(res => {
                         console.log(res.data)
+                        this.props.history.push({
+                            pathname: '/library',
+                            state: { userId: res.data.user._id}
+                          })
                     })
                     .catch(error => {
                         console.log(error)

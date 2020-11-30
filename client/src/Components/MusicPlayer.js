@@ -14,14 +14,15 @@ class MusicPlayer extends React.Component {
             length: 0,
             currentTime: 0,
             currentVolume : 0.5,
-            playlist: data.playlistTest.list
+            playlist: data.playlistTest.list,
+            playlistID: data.playlistTest._id
         }
         console.log(this.state.playlist);
       
     }
     play = () => {
         if (this.props.currentPlaylist != "") {
-            this.state.playlist = this.props.currentPlaylist.songs;
+            //this.setState({playlist: this.props.currentPlaylist.songs, playlistID: this.props.currentPlaylist._id });
         }
         if (this.state.length != 0) {
             this.song.play();
@@ -40,16 +41,16 @@ class MusicPlayer extends React.Component {
     }
     playFromPlaylist = (song) => {
         if (this.props.currentPlaylist != "") {
-            this.state.playlist = this.props.currentPlaylist.songs;
+            
         }
         if (this.state.play) {
             this.song.pause();
         }
-        //if not same song as current song and something playing
-        if((song.uri !== this.state.playlist[this.state.currentSong].uri)) {
-            for (var i = 0; i < this.state.playlist.length; i++) {
-                if (song.uri === this.state.playlist[i].uri) {
-                    this.setState({currentSong: i}, () => {this.song = new Audio(this.state.playlist[this.state.currentSong].uri);
+        //if not same playlist and something playing
+            this.setState({playlist: this.props.currentPlaylist.songs, playlistID: this.props.currentPlaylist._id }, function() {
+                for (var i = 0; i < this.state.playlist.length; i++) {
+                    if (song.uri === this.state.playlist[i].uri) {
+                        this.setState({currentSong: i}, () => {this.song = new Audio(this.state.playlist[this.state.currentSong].uri);
                         this.song.play();
                         this.setState({play: true});
                         this.song.volume = this.state.currentVolume;
@@ -58,20 +59,23 @@ class MusicPlayer extends React.Component {
                         document.getElementById("pause-button").style.display = "block";
                         document.getElementById("play-button").style.display = "none";
                         this.setState({ currentName: this.state.playlist[this.state.currentSong].title, currentArtist: this.state.playlist[this.state.currentSong].artist, length: this.state.playlist[this.state.currentSong].duration});});
+                    }
                 }
             }
-        }
-        else {
-            this.song = new Audio(this.state.playlist[this.state.currentSong].uri);
-            this.song.play();
-            this.setState({play: true});
-            this.song.volume = this.state.currentVolume;
-            this.song.ontimeupdate = this.updateTimeline;
-            console.log(this.state.playlist);
-            document.getElementById("pause-button").style.display = "block";
-            document.getElementById("play-button").style.display = "none";
-            this.setState({ currentName: this.state.playlist[this.state.currentSong].title, currentArtist: this.state.playlist[this.state.currentSong].artist, length: this.state.playlist[this.state.currentSong].duration});
-        }
+            );
+        // else {
+        //     this.setState({playlist: this.props.currentPlaylist.songs}, function() {
+        //         this.song = new Audio(this.state.playlist[this.state.currentSong].uri);
+        //         this.song.play();
+        //         this.setState({play: true});
+        //         this.song.volume = this.state.currentVolume;
+        //         this.song.ontimeupdate = this.updateTimeline;
+        //         console.log(this.state.playlist);
+        //         document.getElementById("pause-button").style.display = "block";
+        //         document.getElementById("play-button").style.display = "none";
+        //         this.setState({ currentName: this.state.playlist[this.state.currentSong].title, currentArtist: this.state.playlist[this.state.currentSong].artist, length: this.state.playlist[this.state.currentSong].duration});
+        //     })
+        // }
     }
     pause = () => {
         this.setState( {play: false });
@@ -120,8 +124,13 @@ class MusicPlayer extends React.Component {
         }
     }
     updateVolume = (event) => {
-        this.song.volume = event.target.value / 100;
-        this.state.currentVolume = this.song.volume;
+        if (this.song == null) {
+            this.state.currentVolume = event.target.value / 100;
+        }
+        else {
+            this.song.volume = event.target.value / 100;
+            this.state.currentVolume = this.song.volume;
+        }
     }
     componentDidMount = () => {
         console.log(this.props.currentPlaylist);
@@ -137,13 +146,13 @@ class MusicPlayer extends React.Component {
        if(bool){
            console.log("we re in the public playlist ")
          Child =(
-            <Link to={`/publicPlayer/${id}`} id="goBackLink" ><label id="playlist_back">Back to Playlist</label></Link>
+            <Link source={`/home`} to={`/publicPlayer/${id}`} id="goBackLink" ><label id="playlist_back">Back to Playlist</label></Link>
           )
     }
     else{
         console.log("we re in the private  playlist ")
          Child = (
-            <Link to={`/player/${id}`} id="goBackLink" ><label id="playlist_back">Back to Playlist</label></Link>
+            <Link source={`/home`} to={`/player/${id}`} id="goBackLink" ><label id="playlist_back">Back to Playlist</label></Link>
           )
     }
         return (

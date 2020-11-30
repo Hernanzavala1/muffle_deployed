@@ -7,7 +7,7 @@ const express = require('express') // import express
  var cors = require('cors');
  const app = express() // create express server
  var auth = require('./routes/auth');
-
+ require("dotenv").config();
 const http = require('http');
 const socketio = require('socket.io');
 const { isObjectType } = require('graphql');
@@ -25,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
  
 
  mongoose
-  .connect('mongodb+srv://hzavalayanes:LWg81JAaf2hiAk7U@cluster0.ccl5r.mongodb.net/Muffle?retryWrites=true&w=majority', {
+  .connect(process.env.ATLAS_URI, {
     promiseLibrary: require('bluebird'), useUnifiedTopology: true ,useNewUrlParser: true, }).then(() => console.log('connection successful')).catch((err) => console.error('this is the errror: ' + err)); 
  app.use(
     '/graphql',

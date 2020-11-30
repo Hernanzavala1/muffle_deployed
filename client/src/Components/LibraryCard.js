@@ -63,7 +63,7 @@ class LibraryCard extends React.Component {
         console.log("in remove from library");
         this.state.library.splice(this.state.library.indexOf(this.state.playlist._id), 1);
         console.log(this.state.library, " new library")
-        axios.post('/auth/removePlaylist', { userId: this.state.userId, library: this.state.library })
+        axios.post('/auth/removeAddedPlaylist', { userId: this.state.userId, library: this.state.library })
             .then(res => {
                 console.log("removed from library")
                 console.log(res.data)
@@ -140,16 +140,18 @@ class LibraryCard extends React.Component {
         if (this.state.isLoading) {
             return <div>Loading...</div>;
         }
-        let lock;
+        let lock, linkTo;
         if (this.state.playlist.public) {
             lock = "fa fa-unlock";
+            linkTo = `/publicPlayer/${this.state.playlist._id}`
         } else {
             lock = "fa fa-lock"
+            linkTo = `/player/${this.state.playlist._id}`
         }
 
         return (
             <div>
-                <Link to={`/player/${this.state.playlist._id}`}>
+                <Link to={{pathname: linkTo, state: {source: '/library'}}}>
                     <div id='library-container'>
 
                         <Card id='library-card-container'>

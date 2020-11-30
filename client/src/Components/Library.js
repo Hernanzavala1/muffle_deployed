@@ -58,7 +58,7 @@ class Library extends React.Component {
                     <div className='playlists'>
                         <h2 className="library-labels">Added Playlists</h2>
                         <div className='playlists-cards'>
-                            <SimpleLibraryList list={this.state.user.library} userId={this.state.userId}></SimpleLibraryList>
+                            <SimpleLibraryList list={this.state.user.addedPlaylists} userId={this.state.userId}></SimpleLibraryList>
                         </div>
                     </div>
                 </div>

@@ -21,7 +21,7 @@ class homeScreen extends React.Component {
         console.log("before the post")
         axios.post('/auth/homePlaylists', {}).then(res=>{
             console.log("in the home screen ")
-            console.log(res.data.playlist)
+            // console.log(res.data.playlist)
             let temp = res.data.playlist.filter(function(playlist) {
                 return playlist.public;
             })

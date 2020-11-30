@@ -3,7 +3,7 @@ import '../App.css'
 import Login from '../Components/Login'
 import NavBar from '../Components/NavBar'
 import Music_Player from '../Components/MusicPlayer'
-import register from '../Components/register'
+import Register from '../Components/register'
 import profileScreen from '../Components/profileScreen'
 import Network from '../Components/Network'
 import Playlist_player from '../Components/playlist_player'
@@ -13,6 +13,7 @@ import HomeScreen from '../Components/homeScreen'
 import Library from '../Components/Library'
 import Splash from '../Components/splashScreen'
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
+
 
 class MuffleParent extends React.Component {
     constructor(props) {
@@ -43,11 +44,11 @@ class MuffleParent extends React.Component {
                     <NavBar updateUserID={this.updateUserID} userID={this.state.userID}></NavBar>
                     <Route exact path={"/"} render={props => <Login {...props} updateID={this.updateUserID} />} />
                     <Route path="/profileScreen" component={profileScreen}></Route>
-                    <Route path="/register" component={register}></Route>
-                    <Route path="/network" component={Network}></Route>
+                    <Route path="/register" render={props => <Register {...props} updateID={this.updateUserID} />} />
+                    <Route path="/network" render={props => <Network {...props} userId={this.state.userID} />}></Route>
                     <Route path="/player/:id" render={props => <Playlist_player {...props} playSong={this.playSong} updateSong={this.updateSong} updatePlaylist={this.updateCurrentPlaylist} currentPlaylist={this.state.currentPlaylist}  />}></Route>
                     <Route path="/edit/:id" render={props => <Create_playlist {...props}  />}></Route>
-                    <Route path="/publicPlayer/:id" render={props => <PublicPlaylistPlayer {...props} updatePlaylist={this.updateCurrentPlaylist} updateSong={this.updateSong} playSong={this.playSong}/>}></Route>
+                    <Route path="/publicPlayer/:id" render={props => <PublicPlaylistPlayer {...props} userID={this.state.userID} updatePlaylist={this.updateCurrentPlaylist} updateSong={this.updateSong} playSong={this.playSong}/>}></Route>
                     {/* <Route path="/createPlaylist" component={Create_playlist}></Route> */}
                     <Route path="/createPlaylist" render={props => <Create_playlist {...props} userId={this.state.userID} />}></Route>
                     <Route path="/library" render={props => <Library {...props} userId={this.state.userID} />}></Route>

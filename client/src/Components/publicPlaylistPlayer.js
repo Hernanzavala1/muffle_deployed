@@ -11,15 +11,24 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import Checkbox from '@material-ui/core/Checkbox';
 import { Button, Modal } from 'react-bootstrap'
+import Tabs from 'react-bootstrap/Tabs'
+import Tab from 'react-bootstrap/Tab'
+import socketIOClient from "socket.io-client"
+const socket = socketIOClient("localhost:5000");
+
 class publicPlaylistPlayer extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
+            user: null,
             playlist: null,
             modalShow: false,
             friends: [{ name: 'ryan Brener', id: "5faa29f181cddb09b45fcd81" }, { name: 'julia Furry', id: "5fac8c0341b6513ea83e9a12" }],
             shareWith: [],
-            checked: []
+            checked: [],
+            channel: "",
+            message:"",
+            messageHistory: []
         }
 
     }
@@ -27,10 +36,13 @@ class publicPlaylistPlayer extends React.Component {
         document.getElementById("app").style.height = "calc(100vh - 90 px)";
         // console.log(this.props.match.params.id , " is the id")
         let playlistId = this.props.match.params.id
+        if (this.props.location.state !== undefined) {
+          this.source = this.props.location.state.source;
+        }
         axios.post('/auth/getPlaylist', { playlistId }).then(res => {
             let length = (this.state.friends).length;
             var arr = Array(length).fill(false);
-            this.setState({ playlist: res.data.playlist, checked: arr }, () => {
+            this.setState({ playlist: res.data.playlist, checked: arr, messageHistory: res.data.playlist.messageHistory }, () => {
                 console.log("we are updating the playlist from online")
                 this.props.updatePlaylist(this.state.playlist);
             })
@@ -38,11 +50,184 @@ class publicPlaylistPlayer extends React.Component {
                 this.props.updatePlaylist(data.publicPlayer.publicPlaylist.playlist);
             }
 
+            axios.post('/auth/getUser', { userId: this.props.userID }).then((res) => {
+                this.setState({ user: res.data.user })
+                var tempArr = []
+                Object.assign(tempArr, this.state.user.likedPlaylists)
+                let result = null;
+                var i;
+                for (i = 0; i < tempArr.length; i++) {
+                  if (tempArr[i].playlistId === this.state.playlist._id) {
+                    result = tempArr[i];
+                    break;
+                  }
+                }
+                if (result != null) {
+                  if (result.isLiked) {
+                    document.getElementById("likeButton").style.color = "#007bff"
+                  }
+                  else {
+                    document.getElementById("dislikeButton").style.color = "#007bff"
+                  }
+                }
+              }).catch((err) => {
+                console.log(err)
+              })
+
         }).catch(err => {
             console.log(err)
         })
 
+        var tempA = []
+        socket.on('publicMessage', data => {
+            if (data.channel == this.state.channel) {
+                var mObj = {
+                    message: data.message,
+                    profileName: data.profileName
+                }
+
+                Object.assign(tempA, this.state.messageHistory)
+                tempA.push(mObj)
+                this.setState({ messageHistory: tempA })//, this.updateUser)
+            }
+        });
     }
+
+    setChannel = () => {
+      this.setState({ messageHistory: this.state.playlist.messageHistory, 
+          channel: this.state.playlist.socketId }, () => {
+          socket.emit("joinChannel", {
+              channel: this.state.channel
+          })
+      })
+  }
+
+  updatePlaylist=()=>{
+    axios.post('/auth/getPlaylist', { playlistId: this.state.playlist._id}).then(res => {
+        this.setState({ playlist: res.data.playlist }, this.setChannel)
+    }).catch(err => {
+        console.log(err)
+    })
+  }
+
+    likePlaylist = () => {
+        console.log("in like")
+        if (this.state.user == null) {
+          return
+        }
+    
+        var tempArr = []
+        Object.assign(tempArr, this.state.user.likedPlaylists)
+        let result = null;
+        var i;
+        for (i = 0; i < tempArr.length; i++) {
+          if (tempArr[i].playlistId === this.state.playlist._id) {
+            result = tempArr[i];
+            break;
+          }
+        }
+        if (result != null) {
+          if (result.isLiked) {
+            tempArr.splice(i, 1);
+            axios.post('/auth/updateLikedPlaylist', { userId: this.state.user._id, likedPlaylists: tempArr }).then((res) => {
+              console.log("unliked here")
+              this.setState({ user: res.data.user }, (() => {
+                this.updateLikes(this.state.playlist.likes - 1)
+                document.getElementById("likeButton").style.color = "white"
+              }))
+    
+            }).catch((err) => {
+              console.log(err)
+            })
+          }
+          else {
+            //change color of icon
+            tempArr[i].isLiked = true;
+            axios.post('/auth/updateLikedPlaylist', { userId: this.props.userID, likedPlaylists: tempArr }).then((res) => {
+              this.setState({ user: res.data.user }, (() => {
+                this.updateLikes(this.state.playlist.likes + 2)
+                document.getElementById("likeButton").style.color = "#007bff"
+                document.getElementById("dislikeButton").style.color = "white"
+              }))
+    
+            }).catch((err) => {
+              console.log(err)
+            })
+          }
+    
+        } else {
+          tempArr.push({ playlistId: this.state.playlist._id, isLiked: true })
+          axios.post('/auth/updateLikedPlaylist', { userId: this.props.userID, likedPlaylists: tempArr }).then((res) => {
+            this.setState({ user: res.data.user }, (() => {
+              this.updateLikes(this.state.playlist.likes + 1)
+              document.getElementById("likeButton").style.color = "#007bff"
+            }))
+          }).catch((err) => {
+            console.log(err)
+          })
+        }
+      }
+      unlikePlaylist = () => {
+        if (this.state.user == null) {
+          return
+        }
+    
+        var tempArr = []
+        Object.assign(tempArr, this.state.user.likedPlaylists)
+        console.log(this.state.user, "user")
+        console.log(tempArr, "array in liekd")
+        let result = null;
+        var i;
+        for (i = 0; i < tempArr.length; i++) {
+          if (tempArr[i].playlistId === this.state.playlist._id) {
+            result = tempArr[i];
+            break;
+          }
+        }
+        console.log(result, " found ")
+        if (result != null) {
+          if (!result.isLiked) {
+            //change color of icon
+            tempArr.splice(i, 1);
+            axios.post('/auth/updateLikedPlaylist', { userId: this.state.user._id, likedPlaylists: tempArr }).then((res) => {
+              console.log("unliked here")
+              this.setState({ user: res.data.user }, (() => {
+                this.updateLikes(this.state.playlist.likes + 1)
+                document.getElementById("dislikeButton").style.color = "white"
+              }))
+    
+            }).catch((err) => {
+              console.log(err)
+            })
+          }
+          else {
+            //change color of icon
+            tempArr[i].isLiked = false;
+            axios.post('/auth/updateLikedPlaylist', { userId: this.props.userID, likedPlaylists: tempArr }).then((res) => {
+              this.setState({ user: res.data.user }, (() => {
+                this.updateLikes(this.state.playlist.likes - 2)
+                document.getElementById("dislikeButton").style.color = "#007bff"
+                document.getElementById("likeButton").style.color = "white"
+              }))
+    
+            }).catch((err) => {
+              console.log(err)
+            })
+          }
+    
+        } else {
+          tempArr.push({ playlistId: this.state.playlist._id, isLiked: false })
+          axios.post('/auth/updateLikedPlaylist', { userId: this.props.userID, likedPlaylists: tempArr }).then((res) => {
+            this.setState({ user: res.data.user }, (() => {
+              this.updateLikes(this.state.playlist.likes - 1)
+              document.getElementById("dislikeButton").style.color = "#007bff"
+            }))
+          }).catch((err) => {
+            console.log(err)
+          })
+        }
+      }
+
     updateLikes = (likes) => {
         console.log("In likes")
         console.log("likes: ", this.state.playlist.likes);
@@ -112,6 +297,40 @@ class publicPlaylistPlayer extends React.Component {
         this.setState({ modalShow: false, shareWith: [], checked: [] })
 
     }
+
+  onChangeMessage = (e) => {
+    this.setState({
+        message: e.target.value
+    });
+  }
+
+  sendMessage = (e) => {
+      e.preventDefault()
+
+      var mObj = {
+          message: this.state.message,
+          senderId: this.props.userID,
+          profileName: this.state.user.profileName
+      }
+
+      var tempA = []
+      Object.assign(tempA, this.state.messageHistory)
+      tempA.push(mObj)
+
+      axios.post('/auth/addPublicMessage', { playlistId: this.state.playlist._id, message: mObj }).then(res => {
+          console.log("playlist", res.data)
+
+          this.setState({ messageHistory: tempA, message: "", playlist: res.data })
+      }).catch(err => {
+          console.log(err)
+      })
+
+      socket.emit('publicChat', {
+          channel: this.state.channel,
+          message: this.state.message
+      });
+  }
+
     render() {
         var temp;
         var songs;
@@ -130,7 +349,7 @@ class publicPlaylistPlayer extends React.Component {
         return (
             <div className="player_container">
                 <div id="row1_player" className="row height:10%">
-                    <Link to='/home' style={{ "display": "flex" }}>
+                    <Link to={this.source} style={{ "display": "flex" }}>
                         <div><i className="fas fa-long-arrow-alt-left" style={{ "color": "White", "textAlign": "center" }}></i></div>
                         <div> <label style={{ "color": "White", "textAlign": "center", "fontWeight": "bold", "margin-left": "5px", "cursor": "pointer" }}>Back</label></div>
                     </Link>
@@ -142,8 +361,8 @@ class publicPlaylistPlayer extends React.Component {
                     <div className="col justify-content:space-between">
                         <div id="playlist-options">
                             <Link><i onClick={(e) => { this.handleModal(e, true) }} className="fa fa-share-alt" style={{ "fontSize": "2.5rem", "color": "white", "marginRight": "35px" }}></i></Link>
-                            <Link onClick={() => this.updateLikes(this.state.playlist.likes + 1)}><i className="fa fa-thumbs-up" aria-hidden="true" style={{ "fontSize": "2.5rem", "color": "white", "marginRight": "35px" }}></i></Link>
-                            <Link onClick={() => this.updateLikes(this.state.playlist.likes - 1)}><i className="fa fa-thumbs-down" aria-hidden="true" style={{ "fontSize": "2.5rem", "color": "white" }}></i></Link>
+                            <Link onClick={() => this.likePlaylist()}><i id="likeButton" className="fa fa-thumbs-up" aria-hidden="true" style={{ "fontSize": "2.5rem", "color": "white", "marginRight": "35px" }}></i></Link>
+                            <Link onClick={() => this.unlikePlaylist()}><i id="dislikeButton" className="fa fa-thumbs-down" aria-hidden="true" style={{ "fontSize": "2.5rem", "color": "white" }}></i></Link>
                         </div>
                     </div>
                 </div>
@@ -163,29 +382,27 @@ class publicPlaylistPlayer extends React.Component {
                         </div>
                     </div>
                     <div className="col" >
-                        <div className="container_chat" style={{ "minHeight": "50vh", "maxHeight": "50vh" }}>
-                            <div style={{ "position": "absolute", "minHeight": "100%", "minWidth": "100%", "backgroundRepeat": "no-repeat", "backgroundPosition": "center", "opacity": "0.5", "backgroundImage":`url(${songs[0].image})`}}  ></div>
-                            <div className="row">
-                                <div id="tabs" className="col">
-                                    <nav>
-                                        <div className="nav nav-tabs" id="nav-tab" role="tablist">
-                                            <a className="nav-item nav-link active" id="nav-chat-tab" data-toggle="tab" href="#nav-chat" role="tab" aria-controls="nav-home" aria-selected="true">Chat</a>
-                                            <a className="nav-item nav-link" id="nav-playlist-tab" data-toggle="tab" href="#nav-lyrics" role="tab" aria-controls="nav-profile" aria-selected="false">Lyrics</a>
-                                        </div>
-                                    </nav>
-                                </div>
-                            </div>
-                            <div className="row">
-                                <div className="col">
+                        <div className="container_chat" style={{ "minHeight": "50vh", "maxHeight": "50vh", "backgroundRepeat": "no-repeat", "backgroundPosition": "center",  "backgroundImage":`url(${songs[0].image})`}}>
+                            {/* <div style={{ "position": "absolute", "minHeight": "100%", "minWidth": "100%", "backgroundRepeat": "no-repeat", "backgroundPosition": "center", "opacity": "0.5", "backgroundImage":`url(${songs[0].image})`}}  ></div> */}
+                            <div>
+                            <Tabs id="uncontrolled-tab-example">
+                                <Tab eventKey="chat" title="Chat">
                                     <ul id="ul_chat">
-                                        <SimpleChatItem className={"received_chat"} text={data.publicPlayer.receivedChat}></SimpleChatItem>
-                                        <SimpleChatItem className={"sent_chat"} text={data.publicPlayer.sentChat}></SimpleChatItem>
+                                        <SimpleChatItem messageHistory={this.state.messageHistory} userId={this.props.userID} publicPlayer={true}></SimpleChatItem>
                                     </ul>
-                                </div>
+                                </Tab>
+                                <Tab eventKey="lyrics" title="Lyrics">
+                                    <ul>
+                                        {/* <SimpleChatItem className={"friend-item"} playlists={this.state.theirPlaylists}></SimpleChatItem> */}
+                                    </ul>
+                                </Tab>
+                            </Tabs>
                             </div>
                             <div id="row_chat" className="row">
                                 <div className="col">
-                                    <input id="text_input" type="text"></input>
+                                  <form onSubmit={this.sendMessage} autoComplete="off">
+                                    <input id="text_input" type="text" style={{ "width": "100%" }} value={this.state.message} onChange={this.onChangeMessage}></input>
+                                  </form>
                                 </div>
                             </div>
                         </div>
