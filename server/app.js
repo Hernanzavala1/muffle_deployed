@@ -21,9 +21,7 @@ const io = require('socket.io')(server, {
 app.use(express.urlencoded({ extended: true }));
  app.use(bodyParser.json()) // use body-parser middleware to parse incoming json
 
- app.get('/', (req, res) => {
-	res.send('Hello from MERN');
-});
+
 
  mongoose
   .connect(process.env.ATLAS_URI, {
