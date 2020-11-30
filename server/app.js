@@ -2,7 +2,6 @@ const express = require('express') // import express
  const bodyParser = require('body-parser') // import body-parser \
  var schema = require('../server/graphql/Schema');
  var mongoose = require('mongoose');
- var cookieParser = require('cookie-parser')
  const graphqlHTTP = require('express-graphql').graphqlHTTP;
  var cors = require('cors');
  const app = express() // create express server
@@ -22,7 +21,9 @@ const io = require('socket.io')(server, {
 app.use(express.urlencoded({ extended: true }));
  app.use(bodyParser.json()) // use body-parser middleware to parse incoming json
 
- 
+ app.get('/', (req, res) => {
+	res.send('Hello from MERN');
+});
 
  mongoose
   .connect(process.env.ATLAS_URI, {
@@ -71,7 +72,10 @@ io.on('connection', socket => {
 if(process.env.NODE_ENV ==="production" ){
   app.use(express.static("client/build"))
 }
-//  server.listen(5000) // setup server to run on port 5000 
-app.listen(process.env.PORT || 5000)
+//  server.listen(5000) // setup server to run on port 5000
+const port = process.env.PORT || 5000; 
+app.listen(port, ()=>{
+  console.log(`Server started on port ${port}`);
+})
 
  module.exports = app;
