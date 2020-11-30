@@ -1,0 +1,15 @@
+#profile-container{
+    padding-top: 50px;
+    margin-left: 150px;
+}
+#profile-options-container{
+    padding-top: 20px;
+    justify-content: left;
+    display: flex;
+}
+#image-container{
+    margin-right: 100px;
+}
+#profile-options{
+    position: relative;
+}

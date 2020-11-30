@@ -1,0 +1,81 @@
+.container-fluid{
+  height: 100vh;
+  min-height: 100% ;
+  padding:0px !important;
+}
+.Music_Player{
+  height: 90px;
+  background-color: beige;
+}
+.App{
+  height: calc(100vh - 90px);
+  background-color: black;
+}
+.NavBar{
+  background-color: black;
+  height:60px;
+  display: flex;
+  position: relative;
+  top:10px;
+  padding-top: 20px;
+  margin-bottom: 20px;
+  justify-content: space-between;
+}
+.Nav_list{
+  text-align: inherit;
+  height: 60px;
+  overflow: visible;
+  flex-shrink: 0;
+  margin-left: 50px;
+}
+.Nav_item{
+  display: inline-block;
+  margin-right: 20px;
+  margin-left: 20px;
+  color: whitesmoke;
+  font-size: 1.5em;
+}
+#User_icon{
+  color: blue;
+  font-size: 38px;
+}
+#logo-icon{
+  font-size: 2em;
+  margin-right: 10px;
+  color: aliceblue;
+}
+#muffle-text{
+  font-size:2em;
+  margin-right: 90px;
+  color:whitesmoke;
+}
+.container_profile{
+  width: auto;
+}
+#profile_header{
+  font-weight: bold;
+  color:white;
+  margin-top: 3%;
+  margin-bottom: 20%;
+}
+.image_container {
+  text-align: center;
+}
+#User_actions{
+  font-size: 1.5rem;
+}
+#pro_pic {
+  border: solid;
+  border-radius: 40%;
+}
+#mini-image-container{
+  height: 45px;
+  max-height: 45px;
+  max-width: 45px;
+  min-width: 45px;
+  padding-bottom: 4px;
+}
+#mini-pic{
+  border: solid transparent;
+  border-radius: 0.25rem;
+}

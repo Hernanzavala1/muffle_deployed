@@ -1,0 +1,23 @@
+.labels{
+  color: white;
+  font-weight: bold;
+}
+.container{
+  margin-top: 100px;
+  display: flex;
+  width: 30%;
+  height: calc(100vh - 160px);
+}
+#scroll-container{
+  width: 100%;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0px;
+}
+.row{
+  margin: 5px;
+}
+#register_btn{
+  margin-top: 10px;
+  width: 50%;
+}

@@ -1,0 +1,202 @@
+{
+    "home":{
+        "recommended": [
+            {
+                "name": "Recommended 1",
+                "count": "20",
+                "image": "../assets/100gec.jpg"
+            },
+            {
+                "name": "Recommended 2",
+                "count": "46",
+                "image": "../assets/kzeroi.jpg"
+            },
+            {
+                "name": "Recommended 3",
+                "count": "32",
+                "image": "../assets/logo.jpg"
+            }
+        ],
+        "playingNow": [
+            {
+                "name": "Playling Now 1",
+                "count": "98",
+                "image": "../assets/mariojudah.jpg"
+            },
+            {
+                "name": "Playling Now 2",
+                "count": "167",
+                "image": "../assets/Pink-Floyd.jpg"
+            }
+        ]
+    },
+
+    "library": {
+        "songs": [
+            {
+                "name": "My First Playlist",
+                "image1": "../assets/100gec.jpg",
+                "image2": "../assets/kzeroi.jpg",
+                "image3": "../assets/logo.jpg",
+                "image4": "../assets/mariojudah.jpg"
+            },
+            {
+                "name": "My Playlist 2",
+                "image1": "../assets/Pink-Floyd.jpg",
+                "image2": "../assets/logo.jpg",
+                "image3": "../assets/100gec.jpg",
+                "image4": "../assets/Pink-Floyd.jpg"
+            }
+        ],
+        "addedPlaylists": [
+            {
+                "name": "Added 1",
+                "image1": "../assets/100gec.jpg",
+                "image2": "../assets/Pink-Floyd.jpg",
+                "image3": "../assets/kzeroi.jpg",
+                "image4": "../assets/100gec.jpg"
+            },
+            {
+                "name": "Added 2",
+                "image1": "../assets/logo.jpg",
+                "image2": "../assets/kzeroi.jpg",
+                "image3": "../assets/100gec.jpg",
+                "image4": "../assets/logo.jpg"
+            }
+        ]
+    },
+
+    "network": {
+        "friends": ["Ryan Contraso", "Kaitly Huyi", "Dominic Pastrana"],
+        "groupChats": ["The Hip Hop Addicts", "Dominic Pastrana"],
+
+        "receivedChat": "Hello Ryan! How are you?",
+        "sentChat": "Eh just going thru stuff hbu?"
+    },
+
+    "publicPlayer": {
+        "publicPlaylist": {
+            "name": "Public Playlist 1",
+            "image": "../assets/100gec.jpg",
+            "playlist": [
+                {
+                    "title": "Caramelo",
+                    "artist": "Ozuna, Myke Towers, Karol G",
+                    "duration": "3:53",
+                    "img":"123"
+
+                },
+                {
+                    "title": "A correr los Laker",
+                    "artist": "El alfa, Nicky jam, Ozuna",
+                    "duration": "5:47",
+                    "img":"456"
+                },
+                {
+                    "title": "Mamacita(Remix)",
+                    "artist": "Ozuna",
+                    "duration": "3:08",
+                    "img":"789"
+                }
+            ]
+        },
+        "receivedChat": "Pubic received message",
+        "sentChat": "Public sent message"
+    },
+    
+    "create":{
+        "createPlaylist": {
+            "name": "My First Playlist",
+            "image": "",
+            "playlist": [
+                {
+                    "title": "Caramelo",
+                    "artist": "Ozuna, Myke Towers, Karol G",
+                    "duration": "3:53"
+                },
+                {
+                    "title": "gdfgdhgg ghghfhf fffghfg ssssssss sssssss sssssss sssssssg gggg",
+                    "artist": "Ozuna, Myke Towers, Karol G",
+                    "duration": "3:53"
+                },
+                {
+                    "title": "Mamacita(Remix)",
+                    "artist": "Ozuna",
+                    "duration": "3:08"
+                },
+                {
+                    "title": "Caramelo",
+                    "artist": "Ozuna, Myke Towers, Karol G",
+                    "duration": "3:53"
+                }
+            ]
+        },
+        "createPlaylistResults": {
+            "search": "Caramelo",
+            "playlist": [
+                {
+                    "title": "Caramelo",
+                    "artist": "Ozuna, Myke Towers, Karol G",
+                    "duration": "3:53"
+                }
+            ]
+        }
+    },
+
+    "privatePlayer":{
+        "privatePlaylist": {
+            "name": "My First Playlist",
+            "image": "../assets/mariojudah.jpg",
+            "playlist": [
+                {
+                    "title": "Caramelo",
+                    "artist": "Ozuna, Myke Towers, Karol G",
+                    "duration": "3:53"
+                },
+                {
+                    "title": "A correr los Laker",
+                    "artist": "El alfa, Nicky jam, Ozuna",
+                    "duration": "5:47"
+                },
+                {
+                    "title": "Mamacita(Remix)",
+                    "artist": "Ozuna",
+                    "duration": "3:08"
+                },
+                {
+                    "title": "Caramelo",
+                    "artist": "Ozuna, Myke Towers, Karol G",
+                    "duration": "3:53"
+                }
+            ]
+        }
+    },
+    
+    "musicPlayer": {
+        "songName": "Mamacita(Remix)",
+        "artistName": "Ozuna",
+        "image": "../assets/kzeroi.jpg"
+    },
+    "playlistTest": {
+        "list": [
+            {
+                "title": "Cibo has a bike",
+                "artist": "KFL",
+                "time": "1:53",
+                "uri": "../assets/test.ogg"
+            },
+            {
+                "title": "Overdose",
+                "artist": "Ludowic",
+                "time": "4:26",
+                "uri": "../assets/Overdose.mp3"
+            },
+            {
+                "title": "Meat Grinder",
+                "artist": "Ludowic",
+                "time": "3:45",
+                "uri": "../assets/Meat Grinder.mp3"
+            }
+        ]
+    }
+}

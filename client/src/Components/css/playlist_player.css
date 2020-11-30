@@ -1,0 +1,106 @@
+#row1_player{
+    width: max-content;
+    margin-left: 3%;
+}
+
+#playlist-options{
+    padding-left: 65%;
+}
+#column_title{
+text-align: center;
+color: white;
+}
+#table_content{
+    text-align: center;
+}
+.my-custom-scrollbar {
+position: relative;
+height: 200px;
+overflow: auto;
+    }
+.table-wrapper-scroll-y {
+display: block;
+}
+.search_container{
+flex-direction: column;
+border: solid;
+border-radius: 15px;
+background:  rgb(24, 24, 24);
+min-height: 50vh;
+max-height: 50vh;
+}
+#search_input{
+    margin-bottom: 10px;
+    width: 95%;
+    margin-top: 10px;
+    border: solid;
+    border-radius: 10px;
+}
+#playlist_name{
+    font-size: 24px;
+    background-color: black;
+    color: white;
+    margin-bottom: 10px;
+    width: 95%;
+    margin-top: 10px;
+    border: solid;
+    border-radius: 10px;
+}
+.table-cell{
+    word-break: break-all;
+    transition: .5s ease;
+}
+.table{
+    border: thin;
+    border-style: solid;
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(0, 0, 0, 0.5);
+}
+#row-options {
+    position: absolute;
+    right: 0;
+    margin-top: 8px;
+    z-index: 1;
+    transition: .5s ease;
+    opacity: 0;
+}
+#library-card-container {
+    width: 16rem;
+    height: 16rem;
+    flex-wrap: wrap;
+    background-color: black;
+}
+#playlist-row:hover .table-cell{
+    opacity: 0.3;
+}
+#playlist-row:hover #row-options{
+    opacity: 1;
+}
+#add-text{
+    font-size:2em;
+    color:#007bff;
+}
+#opt-container {
+    padding-right: 90px;
+    cursor: pointer;
+}
+#opt-container:hover .fas{
+    color: #0056b3 !important;
+}
+#opt-container:hover #add-text{
+    color: #0056b3;
+}
+#save-playlist-container{
+    padding-right: 90px;
+    cursor: pointer;
+    pointer-events: none;
+}
+#save-playlist-container #add-text{
+    color:#0056b3;
+}
+#save-playlist-container:hover .fas{
+    color: #0056b3 !important;
+}
+#save-playlist-container:hover #add-text{
+    color: #0056b3 !important;
+}

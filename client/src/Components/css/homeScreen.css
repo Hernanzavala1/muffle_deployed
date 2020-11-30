@@ -1,0 +1,32 @@
+#home-container{
+    height: calc(100vh - 185px);
+    display:flex;
+    white-space: nowrap;
+}
+.rowsContainer{
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0px;
+}
+/* li{
+    display: inline-block;
+} */
+.li_playlists{
+    display: inline-block;
+}
+#recommendedRow{
+    padding-top: 50px;
+    margin-left: 150px;
+    flex-direction: column;
+}
+#playing_songs{
+    padding-top: 50px;
+    margin-left: 150px;
+    flex-direction: column;
+}
+.col{
+    padding-left: 0px;
+}
+#playlist-list{
+    padding-top: 20px;
+}
