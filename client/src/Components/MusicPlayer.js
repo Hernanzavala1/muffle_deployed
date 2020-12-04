@@ -21,8 +21,8 @@ class MusicPlayer extends React.Component {
       
     }
     play = () => {
-        if (this.props.currentPlaylist != "") {
-            //this.setState({playlist: this.props.currentPlaylist.songs, playlistID: this.props.currentPlaylist._id });
+        if (this.props.currentPlaylist == "") {
+            return;
         }
         if (this.state.length != 0) {
             this.song.play();
@@ -40,9 +40,6 @@ class MusicPlayer extends React.Component {
         this.setState({ currentName: this.state.playlist[this.state.currentSong].title, currentArtist: this.state.playlist[this.state.currentSong].artist, length: this.state.playlist[this.state.currentSong].duration});
     }
     playFromPlaylist = (song) => {
-        if (this.props.currentPlaylist != "") {
-            
-        }
         if (this.state.play) {
             this.song.pause();
         }
@@ -84,6 +81,9 @@ class MusicPlayer extends React.Component {
         document.getElementById("play-button").style.display = "block";
     }
     next = () => {
+        if (this.props.currentPlaylist == "") {
+            return;
+        }
         this.song.pause();
         if (this.state.currentSong == this.state.playlist.length - 1) {
             this.state.currentSong = 0;
@@ -100,6 +100,9 @@ class MusicPlayer extends React.Component {
         document.getElementById("play-button").style.display = "none";
     }
     prev = () => {
+        if (this.props.currentPlaylist == "") {
+            return;
+        }
         this.song.pause();
         if (this.state.currentSong == 0) {
             this.state.currentSong = this.state.playlist.length - 1;
@@ -197,7 +200,7 @@ class MusicPlayer extends React.Component {
                     </div>
                 </div>
                 <div className="song_img">
-                    <img className="album_img" src={data.musicPlayer.image} alt="true"/>
+                    <img className="album_img" src={this.state.playlist[this.state.currentSong].image} alt="No image available"/>
                 </div>
             </div>
 

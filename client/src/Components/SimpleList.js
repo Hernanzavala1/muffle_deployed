@@ -11,7 +11,7 @@ class SimpleList extends React.Component {
                         this.props.list.map((f, index) => (<Link className="friend-link" style={{ textDecoration: "none" }} onClick={() => this.props.onClickFriend(f, index)} >
                                                         <li className={this.props.className}>{f.profileName}</li>
                                                         <div id='friend-options'>
-                                                            <i className="fas fa-minus-circle" style={{ "paddingRight": "1rem", "fontSize": "2rem", "color": "white" }}></i>
+                                                            <div><i className="fas fa-minus-circle" style={{ "paddingRight": "1rem", "fontSize": "2rem", "color": "white" }} onClick={(e) => this.props.onRemoveFriend(e, f, index)}></i></div>
                                                         </div>
                                                     </Link>))
                     }

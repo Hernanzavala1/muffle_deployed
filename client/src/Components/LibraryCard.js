@@ -21,13 +21,10 @@ class LibraryCard extends React.Component {
             friends: [{ name: 'ryan Brener', id: "5faa29f181cddb09b45fcd81" }, { name: 'julia Furry', id: "5fac8c0341b6513ea83e9a12" }],
             shareWith: [],
             checked: [],
-            library: this.props.library
+            library: this.props.library,
+            playlistImages: []
         }
     }
-    fillup() {
-
-    }
-
     componentDidMount() {
 
         document.getElementById("app").style.height = "calc(100vh - 90px)";
@@ -35,7 +32,25 @@ class LibraryCard extends React.Component {
         if (JSON.stringify(this.props.playlist).length > 30)
             return
         axios.post('/auth/getPlaylist', { playlistId: this.props.playlist }).then(res => {
-            this.setState({ playlist: res.data.playlist })
+            this.setState({ playlist: res.data.playlist }, function() {
+                if(this.state.playlist.songs.length < 2) {
+                    this.state.playlistImages[0, 1, 2, 3] = this.state.playlist.songs[0].image;
+                }
+                else if(this.state.playlist.songs.length < 3) {
+                    this.state.playlistImages[0, 2, 3] = this.state.playlist.songs[0].image;
+                    this.state.playlistImages[1] = this.state.playlist.songs[1].image;
+                }
+                else if(this.state.playlist.songs.length < 4) {
+                    this.state.playlistImages[0, 3] = this.state.playlist.songs[0].image;
+                    this.state.playlistImages[1] = this.state.playlist.songs[1].image;
+                    this.state.playlistImages[2] = this.state.playlist.songs[2].image;
+                }
+                else {
+                    for (var i = 0; i < 4; i++) {
+                        this.state.playlistImages[i] = this.state.playlist.songs[i].image;
+                    }
+                }
+            })
             let length = (this.state.friends).length;
             var arr = Array(length).fill(false);
             this.setState({ isLoading: false, checked: arr })
@@ -63,7 +78,7 @@ class LibraryCard extends React.Component {
         console.log("in remove from library");
         this.state.library.splice(this.state.library.indexOf(this.state.playlist._id), 1);
         console.log(this.state.library, " new library")
-        axios.post('/auth/removeAddedPlaylist', { userId: this.state.userId, library: this.state.library })
+        axios.post('/auth/removePlaylist', { userId: this.state.userId, library: this.state.library })
             .then(res => {
                 console.log("removed from library")
                 console.log(res.data)
@@ -167,17 +182,16 @@ class LibraryCard extends React.Component {
                                 </Link>
                             </div>
                             <Card className='library-card'>
-                                {/* <Card.Img src={this.props.playlist.image1} alt="Card image" /> */}
-                                <Card.Img src={this.state.playlist.songs[0].image} alt="Card image" />
+                                <Card.Img src={this.state.playlistImages[0]} alt="Card image" />
                             </Card>
                             <Card className='library-card'>
-                                <Card.Img src={this.state.playlist.songs[0].image} alt="Card image" />
+                                <Card.Img src={this.state.playlistImages[1]} alt="Card image" />
                             </Card>
                             <Card className='library-card'>
-                                <Card.Img src={this.state.playlist.songs[0].image} alt="Card image" />
+                                <Card.Img src={this.state.playlistImages[2]} alt="Card image" />
                             </Card>
                             <Card className='library-card'>
-                                <Card.Img src={this.state.playlist.songs[0].image} alt="Card image" />
+                                <Card.Img src={this.state.playlistImages[3]} alt="Card image" />
                             </Card>
                         </Card>
 

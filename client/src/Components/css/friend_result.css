@@ -1,0 +1,18 @@
+#friend_result_container{
+    height: calc(100vh - 185px);
+    display:flex;
+    white-space: nowrap;
+    width: 100%;
+    min-height: 0px;
+}
+
+.resul_list{
+
+}
+.result_friend{
+
+}
+h1{
+    color: white;
+    font-weight: bold;
+}

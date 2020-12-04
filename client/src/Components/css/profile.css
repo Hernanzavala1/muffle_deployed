@@ -13,3 +13,16 @@
 #profile-options{
     position: relative;
 }
+#alert-box{
+    background-color: rgb(0, 123, 255);
+    width: 50%;
+    text-align: center;
+    left: 30%;
+    opacity: 60%;
+    color: white;
+    font-weight: bold;
+}
+/* #alert-button{
+    background-color: #0056b3;
+    color: white;
+} */

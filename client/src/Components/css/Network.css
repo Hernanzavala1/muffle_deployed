@@ -42,6 +42,11 @@ ul {
 .friend-link:hover #friend-options{
     opacity: 1;
 }
+.playlist-link{
+    height: 75px;
+    border: 3px solid #3a3a3a;
+    background-color: #242424;
+}
 .top-buffer{
     margin-top: 20px;
 }
@@ -59,7 +64,7 @@ ul {
     overflow: hidden;
 }
 #ul_chat{
-    overflow-y: auto;
+    overflow-y: scroll;
     max-height: 35vh;
     word-break: break-all
 }
@@ -94,13 +99,4 @@ ul {
     z-index: 1;
     transition: .5s ease;
     opacity: 0;
-}
-#message-box {
-    max-height: 400px;
-    overflow-y: scroll;
-}
-.message {
-    height: 100px;
-    border: thin solid white;
-    color: white;
 }

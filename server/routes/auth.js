@@ -26,11 +26,13 @@ router.post('/register', function (req, res) {
       password: password,
       email: email,
       library: [], 
-      likedPlaylists:[]
+      likedPlaylists:[],
+      friends: []
     });
 
     User.findOne({
-      email: newUser.email
+      email: newUser.email,
+      profileName: newUser.profileName
     })
       .then(user => {
         if (!user) {
@@ -285,4 +287,100 @@ router.post('/addPublicMessage', function (req, res) {
     })
 })
 
+router.post('/searchFriend', function (req, res) {
+  let profileName = req.body.profileName;
+
+  User.findOne({
+    profileName: profileName
+  })
+  .then(user => {
+      if (!user) {
+        res.json({ user: null})
+      }
+      else {
+        res.json({ user: user})
+      }
+    })
+    .catch(err => {
+      console.log(err)
+    })
+})
+
+router.post('/addFriend', function (req, res) {
+  let userId = req.body.userId;
+  var newFriend = {
+    friendId: req.body.friendId,
+    messageHistory: [],
+    socketId: req.body.socketId
+  }
+
+  let user = User.findOneAndUpdate(
+    { "_id": userId },
+    {
+        "$push": {
+            "friends": newFriend
+        }
+    },
+    {
+      new: true
+    })
+    user.then((data) => {
+      res.json(data)
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+})
+
+router.post('/removeFriend', function (req, res) {
+  let userId = req.body.userId;
+  let friendsList = req.body.friendsList;
+  User.findByIdAndUpdate(
+    { "_id": userId },
+    {  "friends": friendsList } , {new: true},
+    function (err, user) {
+      if (err) throw err;
+      // console.log(user)
+      res.json({ user: user });
+    }
+  )
+})
+
+router.post('/updateProfileName', function (req, res) {
+  let userId = req.body.userId;
+  let newName = req.body.newName;
+  User.findByIdAndUpdate(
+    { "_id": userId },
+    {  "profileName": newName } , {new: true},
+    function (err, user) {
+      if (err) throw err;
+      res.json({ user: user });
+    }
+  )
+})
+
+router.post('/updatePassword', function (req, res) {
+  let userId = req.body.userId;
+  let newPassword = req.body.password;
+  User.findByIdAndUpdate(
+    { "_id": userId },
+    {  "password": newPassword } , {new: true},
+    function (err, user) {
+      if (err) throw err;
+      res.json({ user: user });
+    }
+  )
+})
+router.post('/updateEmail', function (req, res) {
+  let userId = req.body.userId;
+  let newEmail = req.body.email;
+  User.findByIdAndUpdate(
+    { "_id": userId },
+    {  "email": newEmail } , {new: true},
+    function (err, user) {
+      if (err) throw err;
+      res.json({ user: user });
+    }
+  )
+})
 module.exports = router;

@@ -45,6 +45,7 @@ class publicPlaylistPlayer extends React.Component {
             this.setState({ playlist: res.data.playlist, checked: arr, messageHistory: res.data.playlist.messageHistory }, () => {
                 console.log("we are updating the playlist from online")
                 this.props.updatePlaylist(this.state.playlist);
+                document.getElementById("ul_chat").scrollTop = document.getElementById("ul_chat").scrollHeight;
             })
             if (this.state.playlist == null) {
                 this.props.updatePlaylist(data.publicPlayer.publicPlaylist.playlist);
@@ -85,10 +86,11 @@ class publicPlaylistPlayer extends React.Component {
                     message: data.message,
                     profileName: data.profileName
                 }
-
+                console.log(mObj.profileName)
                 Object.assign(tempA, this.state.messageHistory)
                 tempA.push(mObj)
-                this.setState({ messageHistory: tempA })//, this.updateUser)
+                console.log("HEY");
+                this.setState({ messageHistory: tempA }, function() {document.getElementById("ul_chat").scrollTop = document.getElementById("ul_chat").scrollHeight;})
             }
         });
     }
@@ -312,7 +314,7 @@ class publicPlaylistPlayer extends React.Component {
           senderId: this.props.userID,
           profileName: this.state.user.profileName
       }
-
+      console.log(mObj.profileName)
       var tempA = []
       Object.assign(tempA, this.state.messageHistory)
       tempA.push(mObj)
@@ -320,14 +322,15 @@ class publicPlaylistPlayer extends React.Component {
       axios.post('/auth/addPublicMessage', { playlistId: this.state.playlist._id, message: mObj }).then(res => {
           console.log("playlist", res.data)
 
-          this.setState({ messageHistory: tempA, message: "", playlist: res.data })
+          this.setState({ messageHistory: tempA, message: "", playlist: res.data }, function() {document.getElementById("ul_chat").scrollTop = document.getElementById("ul_chat").scrollHeight;})
       }).catch(err => {
           console.log(err)
       })
 
       socket.emit('publicChat', {
           channel: this.state.channel,
-          message: this.state.message
+          message: this.state.message,
+          profileName: this.state.user.profileName
       });
   }
 
@@ -386,24 +389,29 @@ class publicPlaylistPlayer extends React.Component {
                             {/* <div style={{ "position": "absolute", "minHeight": "100%", "minWidth": "100%", "backgroundRepeat": "no-repeat", "backgroundPosition": "center", "opacity": "0.5", "backgroundImage":`url(${songs[0].image})`}}  ></div> */}
                             <div>
                             <Tabs id="uncontrolled-tab-example">
-                                <Tab eventKey="chat" title="Chat">
+                                <Tab eventKey="row_chat" title="Chat">
                                     <ul id="ul_chat">
                                         <SimpleChatItem messageHistory={this.state.messageHistory} userId={this.props.userID} publicPlayer={true}></SimpleChatItem>
                                     </ul>
+                                    <div id="row_chat" className="row">
+                                      <div className="col">
+                                        <form onSubmit={this.sendMessage} autoComplete="off">
+                                          <input id="text_input" type="text" style={{ "width": "100%" }} value={this.state.message} onChange={this.onChangeMessage}></input>
+                                        </form>
+                                      </div>
+                                    </div>
                                 </Tab>
                                 <Tab eventKey="lyrics" title="Lyrics">
                                     <ul>
                                         {/* <SimpleChatItem className={"friend-item"} playlists={this.state.theirPlaylists}></SimpleChatItem> */}
                                     </ul>
+                                    <div id="lyrics" className="row">
+                                      <div className="col">
+                                        <p>Here are the lyrics</p>
+                                      </div>
+                                    </div>
                                 </Tab>
                             </Tabs>
-                            </div>
-                            <div id="row_chat" className="row">
-                                <div className="col">
-                                  <form onSubmit={this.sendMessage} autoComplete="off">
-                                    <input id="text_input" type="text" style={{ "width": "100%" }} value={this.state.message} onChange={this.onChangeMessage}></input>
-                                  </form>
-                                </div>
                             </div>
                         </div>
                     </div>
