@@ -10,8 +10,8 @@ import axios from 'axios'
 import Tabs from 'react-bootstrap/Tabs'
 import Tab from 'react-bootstrap/Tab'
 import { Button, Modal } from 'react-bootstrap'
-const socketIOClient = require("socket.io-client")
-var socket = socketIOClient("https://muffle-deployment1.herokuapp.com/", {path: "/socket.io"});
+import io from 'socket.io-client';
+var socket = io();
 // const socket = socketIOClient.connect("http://muffle-deployment1.herokuapp.com/");
 
 // const socket = require('socket.io-client')('http://muffle-deployment1.herokuapp.com/', {
