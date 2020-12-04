@@ -10,8 +10,8 @@ import axios from 'axios'
 import Tabs from 'react-bootstrap/Tabs'
 import Tab from 'react-bootstrap/Tab'
 import { Button, Modal } from 'react-bootstrap'
-import socketIOClient from "socket.io-client"
-const socket = socketIOClient("https://muffle-deployment1.herokuapp.com/");
+const socketIOClient = require("socket.io-client")
+const socket = socketIOClient.connect("https://muffle-deployment1.herokuapp.com/");
 
 class Network extends React.Component {
 
