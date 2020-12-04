@@ -13,8 +13,8 @@ import Checkbox from '@material-ui/core/Checkbox';
 import { Button, Modal } from 'react-bootstrap'
 import Tabs from 'react-bootstrap/Tabs'
 import Tab from 'react-bootstrap/Tab'
-import io from 'socket.io-client';
-var socket = io();
+// import io from 'socket.io-client';
+var socket = io.connect('http://muffle-deployment1.herokuapp.com/');
 // const socket = socketIOClient.connect("http://muffle-deployment1.herokuapp.com/");
 // const socket = require('socket.io-client')('http://muffle-deployment1.herokuapp.com/', {
 //   transports: ['websocket'],
