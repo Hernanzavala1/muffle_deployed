@@ -97,6 +97,20 @@ class Network extends React.Component {
     }
 
     setChannel = () => {
+        var tempA = []
+        var requests=[]
+        for (var i = 0; i < this.state.currentFriend.library.length; i++) {
+            requests.push(axios.post('/auth/getPlaylist', { playlistId: this.state.currentFriend.library[i] }))
+        }
+        axios.all(requests).then(axios.spread((...responses) => {
+            for (var i = 0; i < responses.length; i++) {
+                tempA.push(responses[i].data.playlist)
+            }
+                this.setState({ theirPlaylists: tempA }, ()=> {document.getElementById("ul_chat").scrollTop = document.getElementById("ul_chat").scrollHeight;})
+        })).catch(err=>{
+            console.log(err)
+        })
+
         this.setState({
             messageHistory: this.state.user.friends[this.state.currentFriendIndex].messageHistory,
             channel: this.state.user.friends[this.state.currentFriendIndex].socketId
@@ -105,16 +119,6 @@ class Network extends React.Component {
                 channel: this.state.channel
             })
         })
-
-        var tempA = []
-        for (var i = 0; i < this.state.currentFriend.library.length; i++) {
-            axios.post('/auth/getPlaylist', { playlistId: this.state.currentFriend.library[i] }).then(res => {
-                tempA.push(res.data.playlist)
-                this.setState({ theirPlaylists: tempA }, function() {document.getElementById("ul_chat").scrollTop = document.getElementById("ul_chat").scrollHeight;})
-            }).catch(err => {
-                console.log(err)
-            })
-        }
 
         document.getElementById("text_input").disabled = false
     }
