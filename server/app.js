@@ -17,7 +17,6 @@ const io = require('socket.io')(server, {
   } 
 });
 
-
 app.use(express.urlencoded({ extended: true }));
  app.use(bodyParser.json()) // use body-parser middleware to parse incoming json
 
