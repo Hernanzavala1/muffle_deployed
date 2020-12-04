@@ -14,8 +14,7 @@ import { Button, Modal } from 'react-bootstrap'
 import Tabs from 'react-bootstrap/Tabs'
 import Tab from 'react-bootstrap/Tab'
 import socketIOClient from "socket.io-client"
-const socket = socketIOClient("localhost:5000");
-
+const socket = socketIOClient("https://muffle-deployment1.herokuapp.com/");
 class publicPlaylistPlayer extends React.Component {
     constructor(props) {
         super(props)
