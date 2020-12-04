@@ -13,10 +13,12 @@ import Checkbox from '@material-ui/core/Checkbox';
 import { Button, Modal } from 'react-bootstrap'
 import Tabs from 'react-bootstrap/Tabs'
 import Tab from 'react-bootstrap/Tab'
-// import socketIOClient from "socket.io-client"
-// const socket = socketIOClient("https://muffle-deployment1.herokuapp.com/");
-const socketIOClient = require("socket.io-client")
-const socket = socketIOClient.connect("https://muffle-deployment1.herokuapp.com:80",{secure: true});
+// const socketIOClient = require("socket.io-client")
+// const socket = socketIOClient.connect("https://muffle-deployment1.herokuapp.com:80",{secure: true});
+const socket = require('socket.io-client')('https://muffle-deployment1.herokuapp.com', {
+  transports: ['websocket'],
+  rejectUnauthorized: false
+})
 class publicPlaylistPlayer extends React.Component {
     constructor(props) {
         super(props)
