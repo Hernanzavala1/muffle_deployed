@@ -37,6 +37,10 @@ app.use(express.urlencoded({ extended: true }));
 
  app.use('/auth', auth)
 
+ io.configure(function () {
+  io.set('transports', ['flashsocket', 'xhr-polling']);
+  });
+
 io.on('connection', socket => {
   //socket.broadcast.emit('message', 'User has joined');
   socket.channel = "";
