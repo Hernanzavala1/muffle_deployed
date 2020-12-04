@@ -11,7 +11,7 @@ import Tabs from 'react-bootstrap/Tabs'
 import Tab from 'react-bootstrap/Tab'
 import { Button, Modal } from 'react-bootstrap'
 const socketIOClient = require("socket.io-client")
-const socket = socketIOClient.connect("wss://muffle-deployment1.herokuapp.com");
+const socket = socketIOClient.connect();
 
 
 class Network extends React.Component {
