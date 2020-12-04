@@ -16,7 +16,7 @@ import Tab from 'react-bootstrap/Tab'
 // import socketIOClient from "socket.io-client"
 // const socket = socketIOClient("https://muffle-deployment1.herokuapp.com/");
 const socketIOClient = require("socket.io-client")
-const socket = socketIOClient.connect("https://muffle-deployment1.herokuapp.com/");
+const socket = socketIOClient.connect("https://muffle-deployment1.herokuapp.com",{secure: true});
 class publicPlaylistPlayer extends React.Component {
     constructor(props) {
         super(props)
