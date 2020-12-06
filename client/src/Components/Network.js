@@ -11,7 +11,7 @@ import Tabs from 'react-bootstrap/Tabs'
 import Tab from 'react-bootstrap/Tab'
 import { Button, Modal } from 'react-bootstrap'
 import io from 'socket.io-client';
-var socket = io.connect('https://muffle-deployment1.herokuapp.com/');
+var socket = io.connect('ws://muffle-deployment1.herokuapp.com:33290/socket.io/?EIO=4&transport=websocket');
 // const socket = socketIOClient.connect("http://muffle-deployment1.herokuapp.com/");
 
 // const socket = require('socket.io-client')('http://muffle-deployment1.herokuapp.com/', {
