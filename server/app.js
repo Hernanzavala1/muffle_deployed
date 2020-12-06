@@ -8,15 +8,8 @@ const express = require('express') // import express
  var auth = require('./routes/auth');
  require("dotenv").config();
 const http = require('http');
-const socketio = require('socket.io');
-const { isObjectType } = require('graphql');
 const server = http.createServer(app)
-const io = require('socket.io')(server, {
-  cors: {
-    origin: '*',
-  } ,
-  transports  : [ 'xhr-polling' ]
-});
+const io = require('socket.io')(server);
 
 app.use(express.urlencoded({ extended: true }));
  app.use(bodyParser.json()) // use body-parser middleware to parse incoming json
@@ -40,7 +33,7 @@ app.use(express.urlencoded({ extended: true }));
 
 
 
-io.on('connection', socket => {
+io.on('connection', (socket) => {
   //socket.broadcast.emit('message', 'User has joined');
   socket.channel = "";
   console.log("in connection")
@@ -74,7 +67,7 @@ if(process.env.NODE_ENV ==="production" ){
 }
 //  server.listen(5000) // setup server to run on port 5000
 const port = process.env.PORT || 5000; 
-app.listen(port, ()=>{
+server.listen(port, ()=>{
   console.log(`Server started on port ${port}`);
 })
 
