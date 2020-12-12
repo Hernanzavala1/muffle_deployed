@@ -91,7 +91,7 @@ max-height: 50vh;
     color: #0056b3;
 }
 #save-playlist-container{
-    padding-right: 90px;
+    /* padding-right: 90px; */
     cursor: pointer;
     pointer-events: none;
 }
@@ -103,4 +103,12 @@ max-height: 50vh;
 }
 #save-playlist-container:hover #add-text{
     color: #0056b3 !important;
+}
+#lyrics-label{
+    overflow-y: scroll;
+    max-height: 35vh;
+    word-break: break-all;
+    color: white;
+    font-size: 1.2rem;
+    white-space: pre-wrap
 }
