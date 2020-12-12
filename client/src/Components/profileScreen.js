@@ -12,6 +12,7 @@ class profileScreen extends React.Component {
 
         this.state = {
             userId: this.props.userID,
+            user: null,
             modalMessage: "",
             field: "",
             modalShow: false,
@@ -21,20 +22,30 @@ class profileScreen extends React.Component {
     }
 
     componentDidMount() {
+        console.log(this.props.userID)
+        axios.post('/auth/getUser', { userId: this.props.userID }).then(res => {
+            this.setState({ user: res.data.user }, () => {console.log(this.state.user)})
+        }).catch(err => {
+            console.log(err)
+        })
+
         document.getElementById("app").style.height = "calc(100vh - 90px)";
     }
 
     updateName = (fieldToUpdate) => {
         axios.post('/auth/updateProfileName', { userId: this.state.userId, newName: fieldToUpdate }).then(res => {
-            this.setState({ modalShow: false, modalMessage: "", field: "", alertMessage: `Profile name updated to ${res.data.user.profileName}`, alertShow: true })
+            this.setState({ modalShow: false, modalMessage: "", field: "", alertMessage: `Profile name updated to ${res.data.user.profileName}.`, alertShow: true }, () => {
+                this.props.updateUser(res.data.user)
+            })
         }).catch(err => {
             console.log(err)
+            this.setState({ modalShow: false, modalMessage: "", field: "", alertMessage: "That profile name is already taken!", alertShow: true })
         })
     }
 
     updatePassword = (fieldToUpdate) => {
         axios.post('/auth/updatePassword', { userId: this.state.userId, password: fieldToUpdate }).then(res => {
-            this.setState({ modalShow: false, modalMessage: "", field: "", alertMessage: "Password updated!", alertShow: true })
+            this.setState({ modalShow: false, modalMessage: "", field: "", alertMessage: "Password updated.", alertShow: true })
         }).catch(err => {
             console.log(err)
         })
@@ -42,7 +53,18 @@ class profileScreen extends React.Component {
 
     updateEmail = (fieldToUpdate) => {
         axios.post('/auth/updateEmail', { userId: this.state.userId, email: fieldToUpdate }).then(res => {
-            this.setState({ modalShow: false, modalMessage: "", field: "", alertMessage: `Email updated to ${res.data.user.email}`, alertShow: true })
+            this.setState({ modalShow: false, modalMessage: "", field: "", alertMessage: `Email updated to ${res.data.user.email}.`, alertShow: true })
+        }).catch(err => {
+            console.log(err)
+            this.setState({ modalShow: false, modalMessage: "", field: "", alertMessage: "That email is already taken!", alertShow: true })
+        })
+    }
+
+    updatePicture = (newPicture) => {
+        axios.post('/auth/updatePicture', { userId: this.state.userId, picture: newPicture }).then(res => {
+            this.setState({ modalShow: false, modalMessage: "", field: "", alertMessage: "Profile picture updated!", alertShow: true }, () => {
+                this.props.updateUser(res.data.user)
+            })
         }).catch(err => {
             console.log(err)
         })
@@ -85,6 +107,23 @@ class profileScreen extends React.Component {
         this.setState({ alertShow: false, alertMessage: ""})
     }
 
+    changeImage = (e) => {
+        e.preventDefault()
+
+        const preview = document.getElementById('pro_pic');
+        const file = document.getElementById('img').files[0];
+        const reader = new FileReader();
+
+        if (file) {
+            reader.readAsDataURL(file);
+            
+            reader.onload = () => {
+                preview.src = reader.result;
+                this.updatePicture(reader.result)
+            }
+        }
+    }
+
     render() {
         return (
             <div>
@@ -106,7 +145,17 @@ class profileScreen extends React.Component {
                         </div>
                         <div id="profile-options-container">
                             <div id="image-container">
-                                <img src="/assets/logo.jpg" id="pro_pic"></img>
+                                {/* <img src="/assets/logo.jpg" id="pro_pic"></img> */}
+                                {this.state.user && <img id="pro_pic" src={this.state.user.profilePicture}style={{"border":"5px solid", "width":"220px", "height":"238px"}}></img>}
+                                <form onSubmit={this.changeImage}>
+                                    <div className="row" style={{"align-items":"center"}}>
+                                        <label for="img" style={{"color":"#007bff", "font-size":"1.5rem", "padding-right":"20px"}}>Select image:</label>
+                                        <input type="file" id="img" name="img" accept="image/*" style={{"color":"#007bff", "padding-right":"20px"}}></input>
+                                    </div>
+                                    <div className="row">
+                                        <button type="submit">Upload</button>
+                                    </div>
+                                </form>
                             </div>
                             <div id="profile-options">
                                 <div> <Link onClick={(e) => { this.handleModal(e, true, "name") }} id="User_actions">Change Profile Name</Link></div>

@@ -20,7 +20,10 @@ class FriendResult extends React.Component {
         console.log(this.props.location.state.friendName)
         axios.post('/auth/searchFriend', { profileName: this.props.location.state.friendName }).then(res => {
             if (res.data.user == null) {
-                console.log("no user found")
+                this.props.history.push({
+                    pathname: '/Network',
+                    state: { noFriends: true }
+                })
             }
             else {
                 console.log(res.data.user)

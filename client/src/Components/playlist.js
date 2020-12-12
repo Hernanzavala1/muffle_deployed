@@ -7,6 +7,8 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import Checkbox from '@material-ui/core/Checkbox';
 import { Button, Modal } from 'react-bootstrap'
+
+
 class Playlist extends React.Component {
   constructor(props) {
     super(props)
@@ -14,21 +16,44 @@ class Playlist extends React.Component {
       user: null,
       playlist: this.props.playlist,
       modalShow: false,
-      friends: [{ name: 'ryan Brener', id: "5faa29f181cddb09b45fcd81" }, { name: 'julia Furry', id: "5fac8c0341b6513ea83e9a12" }],
+      friends: [],
       shareWith: [],
       checked: []
     }
   }
-  componentDidMount = () => {
-    console.log((this.state.friends).length)
-    let length = (this.state.friends).length;
-    var arr = Array(length).fill(false);
-    this.setState({ checked: arr })
+  componentDidMount=  ()=> {
+    // console.log((this.state.friends).length)
+
     axios.post('/auth/getUser', { userId: this.props.userID }).then((res) => {
-      this.setState({ user: res.data.user })
+      let temp = []
+      let requests = this.getFriends(res.data.user);
+      axios.all(requests).then(axios.spread((...responses) => {
+        for (var i = 0; i < responses.length; i++) {
+          temp.push(responses[i].data.user)
+        }
+        let length = temp.length;
+        var arr = Array(length).fill(false);
+        // return result
+        this.setState({ checked: arr, friends: temp , user: res.data.user})
+      })).catch(errors => {
+        console.log(errors)
+      })
     }).catch((err) => {
       console.log(err)
     })
+  }
+
+   getFriends = (user)=>  {
+    // console.log("getting friends")
+    let requests = []
+    
+    var i = 0;
+    for (i; i < user.friends.length; i++) {
+      console.log(user.friends[i])
+      requests.push(axios.post('/auth/getUser', { userId: user.friends[i].friendId }))
+    }
+    return requests
+  
   }
 
   addToLibrary = () => {
@@ -44,7 +69,7 @@ class Playlist extends React.Component {
         console.log(error)
       });
   }
-  likePlaylist = () => {
+  likePlaylist = (undo) => {
     if (this.state.user == null) {
       return
     }
@@ -76,6 +101,12 @@ class Playlist extends React.Component {
         }).catch((err) => {
           console.log(err)
         })
+        if (!undo){
+          this.props.undoCallback(this.likePlaylist);
+        }
+        if (undo) {
+          this.props.redoCallback(this.likePlaylist);
+        }
       }
       else {
         //change color of icon
@@ -91,6 +122,12 @@ class Playlist extends React.Component {
         }).catch((err) => {
           console.log(err)
         })
+        if (!undo){
+          this.props.undoCallback(this.unlikePlaylist);
+        }
+        if (undo) {
+          this.props.redoCallback(this.unlikePlaylist);
+        }
       }
 
     } else {
@@ -106,9 +143,16 @@ class Playlist extends React.Component {
       }).catch((err) => {
         console.log(err)
       })
+      if (!undo){
+        this.props.undoCallback(this.likePlaylist);
+      }
+      if (undo) {
+        this.props.redoCallback(this.likePlaylist);
+      }
     }
+    
   }
-  unlikePlaylist = () => {
+  unlikePlaylist = (undo) => {
     if (this.state.user == null) {
       return
     }
@@ -140,6 +184,12 @@ class Playlist extends React.Component {
         }).catch((err) => {
           console.log(err)
         })
+        if (!undo){
+          this.props.undoCallback(this.unlikePlaylist);
+        }
+        if (undo) {
+          this.props.redoCallback(this.unlikePlaylist);
+        }
       }
       else {
         //change color of icon
@@ -155,6 +205,12 @@ class Playlist extends React.Component {
         }).catch((err) => {
           console.log(err)
         })
+        if (!undo){
+          this.props.undoCallback(this.likePlaylist);
+        }
+        if (undo) {
+          this.props.redoCallback(this.likePlaylist);
+        }
       }
 
     } else {
@@ -170,7 +226,14 @@ class Playlist extends React.Component {
       }).catch((err) => {
         console.log(err)
       })
+      if (!undo) {
+        this.props.undoCallback(this.unlikePlaylist);
+      }
+      if (undo) {
+          this.props.redoCallback(this.unlikePlaylist);
+      }
     }
+    
   }
   updateLikes = (likes) => {
 
@@ -245,33 +308,33 @@ class Playlist extends React.Component {
   }
 
   render() {
-    if(this.state.user == null) {
+    if (this.state.user == null) {
       return <div>Loading</div>
     }
 
     var colorL = "white", colorD = "white";
     var tempArr = []
-      Object.assign(tempArr, this.state.user.likedPlaylists)
-      let result = null;
-      var i;
-      for (i = 0; i < tempArr.length; i++) {
-        if (tempArr[i].playlistId === this.state.playlist._id) {
-          result = tempArr[i];
-          break;
-        }
+    Object.assign(tempArr, this.state.user.likedPlaylists)
+    let result = null;
+    var i;
+    for (i = 0; i < tempArr.length; i++) {
+      if (tempArr[i].playlistId === this.state.playlist._id) {
+        result = tempArr[i];
+        break;
       }
-      if (result != null) {
-        if (result.isLiked) {
-          colorL = "#007bff"
-        }
-        else {
-          colorD = "#007bff"
-        }
+    }
+    if (result != null) {
+      if (result.isLiked) {
+        colorL = "#007bff"
       }
+      else {
+        colorD = "#007bff"
+      }
+    }
 
     return (
       <div>
-        <Link to={{pathname: `/publicPlayer/${this.props.playlist._id}`, state: {source: '/home'}}}>
+        <Link to={{ pathname: `/publicPlayer/${this.props.playlist._id}`, state: { source: '/home' } }}>
           <div className="cardsWrapInner">
             <div className="home-card" >
               <div className="cardImage">
@@ -279,11 +342,11 @@ class Playlist extends React.Component {
                 <div className="hoverContainer">
                   <div style={{ "marginBottom": "10px" }} className="first">
                     <Link onClick={this.addToLibrary}><i className="fas fa-plus-circle" style={{ "marginRight": "10px", "fontSize": "2rem", "color": "white" }}></i></Link>
-                    <Link onClick={() => this.likePlaylist()}><i id={this.state.playlist._id} className="fa fa-thumbs-up" style={{ "fontSize": "2rem", "color": `${colorL}` }}></i></Link>
+                    <Link onClick={() => this.likePlaylist(false)}><i id={this.state.playlist._id} className="fa fa-thumbs-up" style={{ "fontSize": "2rem", "color": `${colorL}` }}></i></Link>
                   </div>
                   <div className="second">
                     <Link > <i onClick={(e) => { this.handleModal(e, true) }} className="fa fa-share-alt" style={{ "marginRight": "10px", "fontSize": "2rem", "color": "white" }}></i></Link>
-                    <Link onClick={() => this.unlikePlaylist()}><i id={this.state.playlist._id + this.state.playlist._id}  className="fa fa-thumbs-down" style={{ "fontSize": "2rem", "color": `${colorD}` }}></i></Link>
+                    <Link onClick={() => this.unlikePlaylist(false)}><i id={this.state.playlist._id + this.state.playlist._id} className="fa fa-thumbs-down" style={{ "fontSize": "2rem", "color": `${colorD}` }}></i></Link>
                   </div>
                 </div>
               </div>
@@ -307,17 +370,17 @@ class Playlist extends React.Component {
             <h3> Select a friend to share the playlist with:</h3>
             <List>
               {this.state.friends.map((friend, index) => (
-                <ListItem key={friend.id}  >
+                <ListItem key={friend._id}  >
                   <ListItemIcon>
                     <Checkbox
                       edge="start"
                       disableRipple
                       checked={this.state.checked[index]}
-                      id={friend.id}
-                      onClick={(e) => { this.checked(e, friend.id, index) }}
+                      id={friend._id}
+                      onClick={(e) => { this.checked(e, friend._id, index) }}
                     />
                   </ListItemIcon>
-                  {friend.name}
+                  {friend.profileName}
                 </ListItem>
 
               ))}

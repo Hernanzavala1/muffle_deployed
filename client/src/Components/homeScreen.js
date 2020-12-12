@@ -11,11 +11,42 @@ class homeScreen extends React.Component {
         super(props);
         this.state = {
           userId:this.props.userId, 
-          playlists:[]
-
+          playlists:[],
+          undo:[],
+          redo:[]
         }
       }
-    
+    undoCallback = (func) => {
+        var temp = this.state.undo;
+        temp.push(func);
+        this.setState({undo: temp});
+    }
+    redoCallback = (func) => {
+        var temp = this.state.redo;
+        temp.push(func);
+        this.setState({redo: temp});
+    }
+    undo = () => {
+        if (this.state.undo === undefined || this.state.undo.length == 0) {
+            return;
+        }
+        var temp = this.state.undo.pop();
+        temp(true);
+        //set undo, remove last element, push to redo, set state
+        var undoTemp = this.state.undo;
+        undoTemp.splice(undoTemp.length, 1);
+        this.setState({undo: undoTemp});
+    }
+    redo() {
+        if (this.state.redo === undefined || this.state.redo.length == 0) {
+            return;
+        }
+        var temp = this.state.redo.pop();
+        temp(false);
+        var redoTemp = this.state.redo;
+        redoTemp.splice(redoTemp.length, 1);
+        this.setState({redo: redoTemp});
+    }
     componentDidMount() {
         document.getElementById("app").style.height = "calc(100vh - 90px)";
         console.log("before the post")
@@ -29,7 +60,25 @@ class homeScreen extends React.Component {
         }).catch(err=>{
             console.log(err)
         })
-      }
+    }
+    undoHandler = (e) => {
+        if (e.keyCode === 90 && e.ctrlKey)
+            this.undo();
+    }
+    redoHandler = (e) => {
+        if (e.keyCode === 89 && e.ctrlKey)
+            this.redo();
+    }
+    componentDidUpdate() {
+        document.removeEventListener('keydown', this.undoHandler);
+        document.addEventListener('keydown', this.undoHandler);
+        document.removeEventListener('keydown', this.redoHandler);
+        document.addEventListener('keydown', this.redoHandler);
+    }
+    componentWillUnmount() {
+        document.removeEventListener('keydown', this.redoHandler);
+        document.removeEventListener('keydown', this.undoHandler);
+    }
     render() {
         return (
             <div id="home-container">
@@ -39,7 +88,7 @@ class homeScreen extends React.Component {
                             <h2 className='library-labels'> Recommended for You</h2>
                         </div>
                         <div className="col">
-                            <SimplePlaylistList list={this.state.playlists} userID={this.props.userId}></SimplePlaylistList>
+                            <SimplePlaylistList list={this.state.playlists} userID={this.props.userId} undoCallback={this.undoCallback} redoCallback={this.redoCallback}></SimplePlaylistList>
                         </div>
 
                     </div>
@@ -48,7 +97,7 @@ class homeScreen extends React.Component {
                             <h2 className='library-labels'>Playing Right Now</h2>
                         </div>
                         <div className="col">
-                            <SimplePlaylistList list={this.state.playlists} userID={this.props.userId}></SimplePlaylistList>
+                            <SimplePlaylistList list={this.state.playlists} userID={this.props.userId} undoCallback={this.undoCallback} redoCallback={this.redoCallback}></SimplePlaylistList>
                         </div>
                     </div>
                 </div>

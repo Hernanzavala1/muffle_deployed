@@ -10,6 +10,7 @@ import axios from 'axios'
 import Tabs from 'react-bootstrap/Tabs'
 import Tab from 'react-bootstrap/Tab'
 import { Button, Modal } from 'react-bootstrap'
+import Alert from 'react-bootstrap/Alert'
 import io from 'socket.io-client';
 var socket = io();
 // const socket = socketIOClient.connect("http://muffle-deployment1.herokuapp.com/");
@@ -18,6 +19,7 @@ var socket = io();
 //   transports: ['websocket'],
 //   rejectUnauthorized: false
 // })
+
 class Network extends React.Component {
 
     constructor(props) {
@@ -27,6 +29,7 @@ class Network extends React.Component {
             userId: this.props.userId,
             user: null,
             friends: [],
+            groupChats: [],
             currentFriend: null,
             currentFriendIndex: 0,
             messageHistory: [],
@@ -34,6 +37,8 @@ class Network extends React.Component {
             message: "",
             channel: "",
             modalShow: false,
+            alertShow: false,
+            alertMessage: "",
             isLoading: true
         }
     }
@@ -42,7 +47,7 @@ class Network extends React.Component {
         document.getElementById("app").style.height = "calc(100vh - 90px)";
 
         axios.post('/auth/getUser', { userId: this.props.userId }).then(res => {
-            this.setState({ user: res.data.user }, () => this.updateFriendsList())
+            this.setState({ user: res.data.user }, () => { this.updateFriendsList(); this.updateGroupChats() })
         }).catch(err => {
             console.log(err)
         })
@@ -59,6 +64,10 @@ class Network extends React.Component {
                 this.setState({ messageHistory: tempA }, this.updateUser)
             }
         });
+        
+        if(this.props.location.state) {
+            this.setState({ alertMessage: "That user doesn't exist!", alertShow: true  })
+        }
     }
 
     updateFriendsList = () => {
@@ -76,6 +85,24 @@ class Network extends React.Component {
             }
             // tempA.sort(this.compare)
             this.setState({ isLoading: false, friends: tempA })
+        })).catch(errors => {
+            console.log(errors)
+        })
+    }
+
+    updateGroupChats = () => {
+        var tempA = []
+        Object.assign(tempA, this.state.groupChats)
+        var tempP = []
+        for (var i = 0; i < this.state.user.addedPlaylists.length; i++) {
+            tempP.push(axios.post('/auth/getPlaylist', { playlistId: this.state.user.addedPlaylists[i] }))
+        }
+
+        axios.all(tempP).then(axios.spread((...responses) => {
+            for (var i = 0; i < responses.length; i++) {
+                tempA.push(responses[i].data.playlist)
+            }
+            this.setState({ isLoading: false, groupChats: tempA })
         })).catch(errors => {
             console.log(errors)
         })
@@ -132,6 +159,13 @@ class Network extends React.Component {
         this.setState({ currentFriend: f, currentFriendIndex: index }, () => {
             this.updateUser()
         })
+    }
+
+    onClickGroup = (f, index) => {
+        this.props.history.push({
+            pathname: `/publicPlayer/${f._id}`,
+            state: { source: '/network' }
+          })
     }
 
     onChangeMessage = (e) => {
@@ -206,16 +240,57 @@ class Network extends React.Component {
         });
     }
 
+    onRemoveGroup = (e, cell, index) => {
+        e.preventDefault()
+        e.stopPropagation()
+
+        var tempA = []
+        Object.assign(tempA, this.state.user.addedPlaylists)
+        tempA.splice(index, 1);
+        axios.post('/auth/removeAddedPlaylist', { userId: this.state.userId, library: tempA })
+            .then(res => {
+                console.log(res.data)
+                this.setState({user: res.data.user, groupChats: []}, () => this.updateGroupChats())
+            })
+            .catch(error => {
+                console.log(error)
+        });
+    }
+
     searchFriend = (e) => {
         e.preventDefault();
-
+        
+        // document.getElementById("friend_input").setCustomValidity("")
         var friendName = document.getElementById("friend_input").value
+        console.log(friendName)
+        for(var i = 0; i < this.state.friends.length; i++) {
+            if(friendName === this.state.friends[i].profileName) {
+                document.getElementById("friend_input").setCustomValidity("You can't add a person you are already friends with!")
+                friendName = ""
+                this.setState({ modalShow: false, alertMessage: "You can't add a person you are already friends with!", alertShow: true  })
+                return
+            }
+        }
 
+        if(friendName == "") {
+            document.getElementById("friend_input").setCustomValidity("You must enter a valid profile name!")
+            friendName = ""
+            this.setState({ modalShow: false, alertMessage: "You must enter a valid profile name!", alertShow: true  })
+            return
+        } 
+        if(friendName == this.state.user.profileName) {
+            document.getElementById("friend_input").setCustomValidity("You can't add yourself as a friend!")
+            friendName = ""
+            this.setState({ modalShow: false, alertMessage: "You can't add yourself as a friend!", alertShow: true  })
+            return
+        }
+
+        console.log(friendName)
         this.setState({ modalShow: false })
         this.props.history.push({
             pathname: '/friendResult',
             state: { friendName: friendName, userId: this.props.userId }
-          })
+        })
     }
 
     handleModal = (e, isOpen) => {
@@ -233,6 +308,10 @@ class Network extends React.Component {
         }
     }
 
+    setShow = (isOpen) => {
+        this.setState({ alertShow: false, alertMessage: ""})
+    }
+
     render() {
         if (this.state.isLoading) {
             return <div>Loading...</div>;
@@ -240,6 +319,15 @@ class Network extends React.Component {
 
         return (
             <div>
+                <Alert id="alert-box" show={this.state.alertShow} variant="alert" style={{"backgroundColor":"#007bff"}}>
+                    <Alert.Heading>{this.state.alertMessage}</Alert.Heading>
+                    <hr />
+                    <div className="d-flex justify-content-end">
+                        <Button id="alert-button" onClick={() => this.setShow(false)} variant="outline-light">
+                            Close
+                        </Button>
+                    </div>
+                </Alert>
                 <div id="container">
                     <div id='scroll-container'>
                         <div id="row1" className="row">
@@ -263,7 +351,7 @@ class Network extends React.Component {
                             </div>
                             <div className="col-3 text-start ">
                                 <h4 style={{ "color": "white", "fontWeight": "bold" }}>Group Chats</h4>
-                                <SimpleList className={"friend-item"} list={data.network.groupChats}></SimpleList>
+                                <SimpleList className={"friend-item"} list={this.state.groupChats} groupChat={true} onClickGroup={this.onClickGroup} onRemoveGroup={this.onRemoveGroup}></SimpleList>
                             </div>
                             <div className="col" style={{ minWidth: "40%" }}>
                                 <div className="container-chat">
@@ -296,15 +384,20 @@ class Network extends React.Component {
                     data-keyboard="false"
                     show={this.state.modalShow}
                 >
+                    {/* <form id="test" onSubmit={(e) => {this.searchFriend(e)}}> */}
                     <Modal.Header>Search for Friends</Modal.Header>
                     <Modal.Body>
                         <h4>Search with profile name:</h4>
-                        <input id="friend_input" type="text" style={{ "width": "100%" }}></input>
+                        {/* <form id="test" onSubmit={(e) => {this.searchFriend(e)}}> */}
+                            <input id="friend_input" type="text" style={{ "width": "100%" }}></input>
+                        {/* </form> */}
                     </Modal.Body>
                     <Modal.Footer>
+                        {/* <Button className="secondary" onSubmit={(e) => {this.searchFriend(e)}} type="submit">Search </Button> */}
                         <Button className="secondary" onClick={(e) => { this.searchFriend(e) }}>Search </Button>
                         <Button className='secondary' onClick={(e) => this.handleModal(e, false)} data-dismiss="modal">Close</Button>
                     </Modal.Footer>
+                    {/* </form> */}
                 </Modal>
             </div>
         );

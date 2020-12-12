@@ -18,6 +18,20 @@ class SimpleList extends React.Component {
                 </ul>
             )
         }
+        else if(this.props.groupChat == true) {
+            return (
+                <ul>
+                    {
+                        this.props.list.map((f, index) => (<Link className="friend-link" style={{ textDecoration: "none" }} onClick={() => this.props.onClickGroup(f, index)} >
+                                                        <li className={this.props.className}>{f.name}</li>
+                                                        <div id='friend-options'>
+                                                            <div><i className="fas fa-minus-circle" style={{ "paddingRight": "1rem", "fontSize": "2rem", "color": "white" }} onClick={(e) => this.props.onRemoveGroup(e, f, index)}></i></div>
+                                                        </div>
+                                                    </Link>))
+                    }
+                </ul>
+            )
+        }
         else {
             return (
                 <ul>

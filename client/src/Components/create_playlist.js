@@ -37,8 +37,10 @@ class create_playlist extends React.Component {
             playlistSongs: [],
             playlistName: '',
             edit: false,
-            playlist: null
-
+            playlist: null,
+            undoStack: [],
+            redoStack: [],
+            isUndo: false
         }
     }
     componentDidMount() {
@@ -66,11 +68,70 @@ class create_playlist extends React.Component {
             console.log(err)
         })
 
+        // document.getElementById("search_input") = function() {
+        //     this.setState({focused: this})
+        // }
+        
+        document.addEventListener('keydown', (event) => {this.addListeners(event)})
+
         document.getElementById("save-playlist-container").childNodes[0].style.color='#0056b3'
     }
 
+    componentWillUnmount() {
+        document.removeEventListener('keydown', (event) => {this.addListeners(event)})
+    }
+
+    addListeners = (event) => {
+        var searchInput = document.getElementById("search_input")
+        var playlistName = document.getElementById("playlist_name")
+        if(event.ctrlKey && event.key.toLowerCase() === 'z') {
+            if(document.activeElement === searchInput || document.activeElement === playlistName) {
+                return
+            }
+            event.preventDefault()
+            this.undo()
+        }
+        else if(event.ctrlKey && event.key.toLowerCase()  === 'y') {
+            if(document.activeElement === searchInput || document.activeElement === playlistName) {
+                return
+            }
+            event.preventDefault()
+            this.redo()
+        }
+    }
+
+    undo = () => {
+        if(this.state.undoStack.length > 0) {
+            this.setState({ isUndo: true}, () => {
+                this.state.undoStack[this.state.undoStack.length - 1].func(this.state.undoStack[this.state.undoStack.length - 1].args)
+                var p = this.state.undoStack.pop()
+                if(p.func == this.onRemoveFromPlaylist) {
+                    this.state.redoStack.push({func: this.onAddToPlaylist, args: p.args})
+                }
+                else {
+                    this.state.redoStack.push({func: this.onRemoveFromPlaylist, args: p.args})
+                }
+            })
+        }
+    }
+
+    redo = () => {
+        if(this.state.redoStack.length > 0) {
+            this.setState({ isUndo: true}, () => {
+                this.state.redoStack[this.state.redoStack.length - 1].func(this.state.redoStack[this.state.redoStack.length - 1].args)
+                var p = this.state.redoStack.pop()
+
+                if(p.func == this.onAddToPlaylist) {
+                    this.state.undoStack.push({func: this.onRemoveFromPlaylist, args: p.args})
+                }
+                else {
+                    this.state.undoStack.push({func: this.onAddToPlaylist, args: p.args})
+                }
+            })
+        }
+    }
+
     updateSongName = (e) => {
-        console.log(e.target.value, "is the new text");
         this.setState({ songName: e.target.value })
     }
 
@@ -131,7 +192,6 @@ class create_playlist extends React.Component {
                 })
             }
             this.setState({ songName: "" })
-            console.log(this.state.results)
 
         }).catch(err => {
             console.log(err)
@@ -146,14 +206,20 @@ class create_playlist extends React.Component {
         }
 
         this.state.playlistSongs.push(cell)
-        this.setState({ songName: "" })
+        if(!this.state.isUndo) {
+            this.state.undoStack.push({func: this.onRemoveFromPlaylist, args: cell})
+        }
+        this.setState({ isUndo: false })
     }
 
     onRemoveFromPlaylist(cell) {
         var tempA = this.state.playlistSongs
         var index = tempA.indexOf(cell)
         tempA.splice(index, 1)
-        this.setState({ playlistSongs: tempA })
+        if(!this.state.isUndo) {
+            this.state.undoStack.push({func: this.onAddToPlaylist, args: cell})
+        }
+        this.setState({ playlistSongs: tempA, isUndo: false })
 
         if(this.state.playlistSongs.length <= 0) {  // Disable
             document.getElementById("save-playlist-container").style.pointerEvents='none'
@@ -165,7 +231,6 @@ class create_playlist extends React.Component {
     updatePlaylist = () => {
         let playlistId = this.props.match.params.id
         axios.post('/auth/updatePlaylist', { playlistId: playlistId, playlistName: this.state.playlistName, songs: this.state.playlistSongs }).then((res) => {
-            console.log(res.data.playlist);
             this.props.history.push('/library')
         }).catch((err) => {
             console.log(err)
@@ -213,7 +278,7 @@ class create_playlist extends React.Component {
             .then(res => {
                 console.log(res.data)
 
-                axios.post('/auth/addPlaylist', { userId: this.state.userId, playlistId: res.data.playlist._id })
+                axios.post('/auth/addCreatedPlaylist', { userId: this.state.userId, playlistId: res.data.playlist._id })
                     .then(res => {
                         console.log(res.data)
                         this.props.history.push({
@@ -249,7 +314,7 @@ class create_playlist extends React.Component {
                             {/* <h3 contentEditable="true" style={{ "color": "white", "overflow-wrap": "anywhere" }} onChange={(e)=>this.updatePlaylistName(e)}>{this.state.playlistName}</h3> */}
                             <input id="playlist_name" type="text" onChange={(e) => this.updatePlaylistName(e)} value={this.state.playlistName} placeholder={"Enter playlist name here..."}></input>
                         </div>
-                        <div id="save-playlist-container" onClick={this.savePlaylist}>
+                        <div id="save-playlist-container" onClick={this.savePlaylist} style={{"height":"fit-content", "width":"fit-content"}}>
                             <i className="fas fa-check-circle" style={{ "fontSize": "2rem", "color": "white", marginRight: "10px", "color": "#007bff" }}></i>
                             <strong id='add-text'>Save Playlist</strong>
                         </div>

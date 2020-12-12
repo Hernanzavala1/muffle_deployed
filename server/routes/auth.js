@@ -99,6 +99,23 @@ router.post('/addPlaylist', function (req, res) {
   )
   // }
 })
+router.post('/addCreatedPlaylist', function (req, res) {
+  let userId = req.body.userId;
+  let playlistId = req.body.playlistId;
+  // console.log("in add playlist", playlistId);
+
+  User.updateOne(
+    { "_id": userId },
+    { "$push": { "library": playlistId } },
+    // {$push: {"library.$": playlistId}},
+    function (err, user) {
+      if (err) throw err;
+      // console.log(user)
+      res.json({ user: user });
+    }
+  )
+  // }
+})
 router.post('/updateLikedPlaylist', function (req, res) {
   let userId = req.body.userId;
   let likedPlaylists = req.body.likedPlaylists;
@@ -178,7 +195,7 @@ router.post('/login', function (req, res) {
           });
         }
         // console.log("the user id is: ", user._id)
-        res.json({ success: true, msg: "passwords matched we are good", userId: user._id });
+        res.json({ success: true, msg: "passwords matched we are good", userId: user._id, user:user });
       }
     }
   );
@@ -349,14 +366,31 @@ router.post('/removeFriend', function (req, res) {
 router.post('/updateProfileName', function (req, res) {
   let userId = req.body.userId;
   let newName = req.body.newName;
-  User.findByIdAndUpdate(
-    { "_id": userId },
-    {  "profileName": newName } , {new: true},
-    function (err, user) {
-      if (err) throw err;
-      res.json({ user: user });
-    }
-  )
+  User.findOne({
+    profileName: newName
+  })
+    .then(user => {
+      if (!user) {
+        console.log("the user was not  found");
+        // save the user
+        User.findByIdAndUpdate(
+          { "_id": userId },
+          {  "profileName": newName } , {new: true},
+          function (err, user) {
+            if (err) throw err;
+            res.json({ user: user });
+          }
+        )
+
+      } else {
+        console.log("user already exist ")
+        throw err
+        //res.json({ error: 'User already exists',  user:user})
+      }
+    })
+    .catch(err => {
+      res.send('error: ' + err)
+    })
 })
 
 router.post('/updatePassword', function (req, res) {
@@ -374,9 +408,38 @@ router.post('/updatePassword', function (req, res) {
 router.post('/updateEmail', function (req, res) {
   let userId = req.body.userId;
   let newEmail = req.body.email;
+
+  User.findOne({
+    email: newEmail
+  })
+    .then(user => {
+      if (!user) {
+        console.log("the user was not  found");
+        // save the user
+        User.findByIdAndUpdate(
+          { "_id": userId },
+          {  "email": newEmail } , {new: true},
+          function (err, user) {
+            if (err) throw err;
+            res.json({ user: user });
+          }
+        )
+      } else {
+        console.log("user already exist ")
+        throw err
+        //res.json({ error: 'User already exists',  user:user})
+      }
+    })
+    .catch(err => {
+      res.send('error: ' + err)
+    })
+})
+router.post('/updatePicture', function (req, res) {
+  let userId = req.body.userId;
+  let newPicture = req.body.picture;
   User.findByIdAndUpdate(
     { "_id": userId },
-    {  "email": newEmail } , {new: true},
+    {  "profilePicture": newPicture } , {new: true},
     function (err, user) {
       if (err) throw err;
       res.json({ user: user });

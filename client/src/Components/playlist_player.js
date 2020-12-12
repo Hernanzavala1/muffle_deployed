@@ -14,10 +14,11 @@ class playlist_player extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
+            user:this.props.user,
             playlist: null,
             isLoading: true,
             modalShow: false,
-            friends: [{ name: 'ryan Brener', id: "5faa29f181cddb09b45fcd81" }, { name: 'julia Furry', id: "5fac8c0341b6513ea83e9a12" }],
+            friends: [],
             shareWith: [],
             checked: []
         }
@@ -26,17 +27,41 @@ class playlist_player extends React.Component {
         document.getElementById("app").style.height = "calc(100vh - 90 px)";
         let playlistId = this.props.match.params.id
         axios.post('/auth/getPlaylist', { playlistId: playlistId }).then(res => {
-            this.setState({ playlist: res.data.playlist })
-            let length = (this.state.friends).length;
-            var arr = Array(length).fill(false);
-            this.setState({ isLoading: false, checked: arr })
-            this.props.updatePlaylist(res.data.playlist);
+            // this.setState({ playlist: res.data.playlist })
+            if (this.state.user != null) {
+            let temp = []
+            let requests = this.getFriends(this.state.user);
+            axios.all(requests).then(axios.spread((...responses) => {
+              for (var i = 0; i < responses.length; i++) {
+                temp.push(responses[i].data.user)
+              }
+              let length = temp.length;
+              var arr = Array(length).fill(false);
+              this.setState({ isLoading: false, checked: arr, friends: temp,playlist: res.data.playlist },()=>{
+                this.props.updatePlaylist(res.data.playlist);
+              })
+            })).catch(errors => {
+              console.log(errors)
+            })
+        }
+          
         }).catch(err => {
             console.log(err)
         })
 
     }
-
+    getFriends = (user)=>  {
+        // console.log("getting friends")
+        let requests = []
+        
+        var i = 0;
+        for (i; i < user.friends.length; i++) {
+          console.log(user.friends[i])
+          requests.push(axios.post('/auth/getUser', { userId: user.friends[i].friendId }))
+        }
+        return requests
+      
+      }
     handleModal(e, value) {
         e.preventDefault();
         // W3C model
@@ -144,17 +169,17 @@ class playlist_player extends React.Component {
                         <h3> Select a friend to share the playlist with:</h3>
                         <List>
                             {this.state.friends.map((friend, index) => (
-                                <ListItem key={friend.id}  >
+                                <ListItem key={friend._id}  >
                                     <ListItemIcon>
                                         <Checkbox
                                             edge="start"
                                             disableRipple
                                             checked={this.state.checked[index]}
-                                            id={friend.id}
-                                            onClick={(e) => { this.checked(e, friend.id, index) }}
+                                            id={friend._id}
+                                            onClick={(e) => { this.checked(e, friend._id, index) }}
                                         />
                                     </ListItemIcon>
-                                    {friend.name}
+                                    {friend.profileName}
                                 </ListItem>
 
                             ))}

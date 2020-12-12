@@ -20,7 +20,7 @@ class SimpleLibraryList extends React.Component{
     }
     render(){
         return (
-            this.state.library.map((p, index) => (<LibraryCard playlist={p} updated={this.state.updated} updateUpd={this.updateUpd} userId={this.props.userId} library={this.state.library} updateLibrary={this.updateLibrary}></LibraryCard>))
+            this.state.library.map((p, index) => (<LibraryCard playlist={p} user={this.props.user} updated={this.state.updated} updateUpd={this.updateUpd} userId={this.props.userId} library={this.state.library} updateLibrary={this.updateLibrary}></LibraryCard>))
         )
     }
 }

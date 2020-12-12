@@ -14,11 +14,12 @@ class LibraryCard extends React.Component {
         super(props);
 
         this.state = {
+            user: this.props.user,
             userId: this.props.userId,
             playlist: null,
             isLoading: true,
             modalShow: false,
-            friends: [{ name: 'ryan Brener', id: "5faa29f181cddb09b45fcd81" }, { name: 'julia Furry', id: "5fac8c0341b6513ea83e9a12" }],
+            friends: [],
             shareWith: [],
             checked: [],
             library: this.props.library,
@@ -32,15 +33,15 @@ class LibraryCard extends React.Component {
         if (JSON.stringify(this.props.playlist).length > 30)
             return
         axios.post('/auth/getPlaylist', { playlistId: this.props.playlist }).then(res => {
-            this.setState({ playlist: res.data.playlist }, function() {
-                if(this.state.playlist.songs.length < 2) {
+            this.setState({ playlist: res.data.playlist }, function () {
+                if (this.state.playlist.songs.length < 2) {
                     this.state.playlistImages[0, 1, 2, 3] = this.state.playlist.songs[0].image;
                 }
-                else if(this.state.playlist.songs.length < 3) {
+                else if (this.state.playlist.songs.length < 3) {
                     this.state.playlistImages[0, 2, 3] = this.state.playlist.songs[0].image;
                     this.state.playlistImages[1] = this.state.playlist.songs[1].image;
                 }
-                else if(this.state.playlist.songs.length < 4) {
+                else if (this.state.playlist.songs.length < 4) {
                     this.state.playlistImages[0, 3] = this.state.playlist.songs[0].image;
                     this.state.playlistImages[1] = this.state.playlist.songs[1].image;
                     this.state.playlistImages[2] = this.state.playlist.songs[2].image;
@@ -51,17 +52,43 @@ class LibraryCard extends React.Component {
                     }
                 }
             })
-            let length = (this.state.friends).length;
-            var arr = Array(length).fill(false);
-            this.setState({ isLoading: false, checked: arr })
+            // let length = (this.state.friends).length;
+            // var arr = Array(length).fill(false);
+            // this.setState({ isLoading: false, checked: arr })
+            if (this.state.user != null) {
+                let temp = []
+                let requests = this.getFriends(this.state.user);
+                axios.all(requests).then(axios.spread((...responses) => {
+                    for (var i = 0; i < responses.length; i++) {
+                        temp.push(responses[i].data.user)
+                    }
+                    let length = temp.length;
+                    var arr = Array(length).fill(false);
+                    // return result
+                    this.setState({ isLoading: false,checked: arr, friends: temp})
+                })).catch(errors => {
+                    console.log(errors)
+                })
+            }
         }).catch(err => {
             console.log(err)
         })
     }
+    getFriends = (user) => {
+        // console.log("getting friends")
+        let requests = []
+
+        var i = 0;
+        for (i; i < user.friends.length; i++) {
+            console.log(user.friends[i])
+            requests.push(axios.post('/auth/getUser', { userId: user.friends[i].friendId }))
+        }
+        return requests
+
+    }
 
     componentDidUpdate() {
-        if (this.props.updated)
-        {
+        if (this.props.updated) {
             axios.post('/auth/getPlaylist', { playlistId: this.props.playlist }).then(res => {
                 this.setState({ playlist: res.data.playlist })
                 let length = (this.state.friends).length;
@@ -78,14 +105,14 @@ class LibraryCard extends React.Component {
         console.log("in remove from library");
         this.state.library.splice(this.state.library.indexOf(this.state.playlist._id), 1);
         console.log(this.state.library, " new library")
-        axios.post('/auth/removePlaylist', { userId: this.state.userId, library: this.state.library })
+        axios.post('/auth/removeAddedPlaylist', { userId: this.state.userId, library: this.state.library })
             .then(res => {
                 console.log("removed from library")
                 console.log(res.data)
             })
             .catch(error => {
                 console.log(error)
-        });
+            });
         this.props.updateLibrary(this.state.library);
     }
     changeVisibility = () => {
@@ -166,7 +193,7 @@ class LibraryCard extends React.Component {
 
         return (
             <div>
-                <Link to={{pathname: linkTo, state: {source: '/library'}}}>
+                <Link to={{ pathname: linkTo, state: { source: '/library' } }}>
                     <div id='library-container'>
 
                         <Card id='library-card-container'>
@@ -212,17 +239,17 @@ class LibraryCard extends React.Component {
                         <h3> Select a friend to share the playlist with:</h3>
                         <List>
                             {this.state.friends.map((friend, index) => (
-                                <ListItem key={friend.id}  >
+                                <ListItem key={friend._id}  >
                                     <ListItemIcon>
                                         <Checkbox
                                             edge="start"
                                             disableRipple
                                             checked={this.state.checked[index]}
-                                            id={friend.id}
-                                            onClick={(e) => { this.checked(e, friend.id, index) }}
+                                            id={friend._id}
+                                            onClick={(e) => { this.checked(e, friend._id, index) }}
                                         />
                                     </ListItemIcon>
-                                    {friend.name}
+                                    {friend.profileName}
                                 </ListItem>
 
                             ))}

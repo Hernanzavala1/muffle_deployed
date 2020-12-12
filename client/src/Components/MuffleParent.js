@@ -15,13 +15,16 @@ import Splash from '../Components/splashScreen'
 import FriendResult from '../Components/FriendResult'
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 
+
 class MuffleParent extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             userID: "",
+            user: null,
             currentPlaylist: "",
-            currentSong: ""
+            currentSong: "",
+            currentSongInfo: null
         }
         this.musicPlayer= React.createRef();
     }
@@ -37,18 +40,24 @@ class MuffleParent extends React.Component {
     updateUserID = (event) => {
         this.setState({ userID: event });
     }
+    updateCurrentSongInfo = (song) => {
+        this.setState({ currentSongInfo: song });
+    }
+    updateUser = (user) => {
+        this.setState({ user: user})
+    }
     render() {
         return (
             <div className="container-fluid" style={{ minWidth: "1100px" }}>
                 <div className="App" id="app">
-                    <NavBar updateUserID={this.updateUserID} userID={this.state.userID}></NavBar>
-                    <Route exact path={"/"} render={props => <Login {...props} updateID={this.updateUserID} />} />
-                    <Route path="/profileScreen" render={props => <ProfileScreen {...props} userID={this.state.userID} />}></Route>
+                    <NavBar updateUserID={this.updateUserID} updateUser={this.updateUser} userID={this.state.userID} user={this.state.user}></NavBar>
+                    <Route exact path={"/"} render={props => <Login {...props} updateID={this.updateUserID} updateUser={this.updateUser} />} />
+                    <Route path="/profileScreen" render={props => <ProfileScreen {...props} userID={this.state.userID} updateUser={this.updateUser} />}></Route>
                     <Route path="/register" render={props => <Register {...props} updateID={this.updateUserID} />} />
                     <Route path="/network" render={props => <Network {...props} userId={this.state.userID} />}></Route>
-                    <Route path="/player/:id" render={props => <Playlist_player {...props} playSong={this.playSong} updateSong={this.updateSong} updatePlaylist={this.updateCurrentPlaylist} currentPlaylist={this.state.currentPlaylist}  />}></Route>
+                    <Route path="/player/:id" render={props => <Playlist_player {...props} user={this.state.user} playSong={this.playSong} updateSong={this.updateSong} updatePlaylist={this.updateCurrentPlaylist} currentPlaylist={this.state.currentPlaylist}  />}></Route>
                     <Route path="/edit/:id" render={props => <Create_playlist {...props}  />}></Route>
-                    <Route path="/publicPlayer/:id" render={props => <PublicPlaylistPlayer {...props} userID={this.state.userID} updatePlaylist={this.updateCurrentPlaylist} updateSong={this.updateSong} playSong={this.playSong}/>}></Route>
+                    <Route path="/publicPlayer/:id" render={props => <PublicPlaylistPlayer {...props} userID={this.state.userID} updatePlaylist={this.updateCurrentPlaylist} updateSong={this.updateSong} playSong={this.playSong} currentSongInfo={this.state.currentSongInfo}/>}></Route>
                     {/* <Route path="/createPlaylist" component={Create_playlist}></Route> */}
                     <Route path="/createPlaylist" render={props => <Create_playlist {...props} userId={this.state.userID} />}></Route>
                     <Route path="/library" render={props => <Library {...props} userId={this.state.userID} />}></Route>
@@ -57,7 +66,7 @@ class MuffleParent extends React.Component {
                     <Route path="/friendResult" render={props => <FriendResult {...props} />}></Route>
                 </div>
                 {/* <Route path={['/profileScreen', '/network', '/player', '/publicPlayer', '/createPlaylist', '/home', '/library']} component={Music_Player} currentPlaylist={this.state.currentPlaylist}></Route> */}
-                <Route path={['/profileScreen', '/network', '/player', '/publicPlayer', '/createPlaylist', '/home', '/library', '/edit', '/friendResult']} render={props => <Music_Player {...props} ref={this.musicPlayer} currentPlaylist={this.state.currentPlaylist} currentSong={this.state.currentSong} />}></Route>
+                <Route path={['/profileScreen', '/network', '/player', '/publicPlayer', '/createPlaylist', '/home', '/library', '/edit', '/friendResult']} render={props => <Music_Player {...props} ref={this.musicPlayer} currentPlaylist={this.state.currentPlaylist} currentSong={this.state.currentSong} updateCurrentSongInfo={this.updateCurrentSongInfo} />}></Route>
             </div>
 
         )

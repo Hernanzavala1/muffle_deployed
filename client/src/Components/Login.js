@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import qs from 'qs';
 import './css/Login.css'
+import { json } from 'body-parser';
 class Login extends React.Component {
 
   constructor(props) {
     super(props);
+    axios.defaults.baseURL= "http://localhost:5000"
     this.onChangeEmail = this.onChangeEmail.bind(this);
     this.onChangePassword = this.onChangePassword.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
@@ -21,6 +23,16 @@ class Login extends React.Component {
 
   componentDidMount() {
     document.getElementById("app").style.height = "100vh";
+    const loggedInUser = localStorage.getItem("user");
+    if (loggedInUser) {
+      const foundUser = JSON.parse(loggedInUser);
+      console.log(foundUser)
+      this.props.updateID(foundUser._id);
+      this.props.history.push({
+       pathname: '/home',
+       state: { userId: foundUser._id}
+     })
+    }
     
   }
 
@@ -76,9 +88,12 @@ class Login extends React.Component {
             .then(res => {
               console.log("in login ")
               console.log(res.data)
-              this.setState({ message: ''})
+              this.setState({ message: ''},()=>{
+                localStorage.setItem('user', JSON.stringify(res.data.user))
+              })
               // TODO: ID DOESNT UPDATE
               this.props.updateID(res.data.userId);
+              this.props.updateUser(res.data.user)
                this.props.history.push({
                 pathname: '/home',
                 state: { userId: res.data.userId}
@@ -86,7 +101,7 @@ class Login extends React.Component {
              })
             .catch(error => {
               console.log(error)
-              if(error.response.status === 401) {
+              if(error.status === 401) {
                 this.setState({ message: 'Login failed. Username or password do not match.'})
               }
             });
