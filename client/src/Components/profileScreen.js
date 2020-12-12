@@ -127,7 +127,7 @@ class profileScreen extends React.Component {
     render() {
         return (
             <div>
-                <Alert id="alert-box" show={this.state.alertShow} variant="primary" style={{"backgroundColor":"#007bff"}}>
+                <Alert id="alert-box" show={this.state.alertShow} variant="primary" >
                     <Alert.Heading>{this.state.alertMessage}</Alert.Heading>
                     <hr />
                     <div className="d-flex justify-content-end">
