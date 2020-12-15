@@ -64,10 +64,11 @@ io.on('connection', (socket) => {
 })
 if(process.env.NODE_ENV ==="production" ){
   app.use(express.static("client/build"))
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve( "client/build", "index.html")); // <- try "index.html"
+  });
 }
-app.get('/page',function(req,res){
-  res.send("page");
-});
+
 //  server.listen(5000) // setup server to run on port 5000
 const port = process.env.PORT || 5000; 
 server.listen(port, ()=>{
