@@ -197,7 +197,7 @@ class profileScreen extends React.Component {
                             <div id="profile-options-container">
                                 <div id="image-container">
                                     {/* <img src="/assets/logo.jpg" id="pro_pic"></img> */}
-                                    {this.state.user && <img id="pro_pic" alt="Girl in a jacket" src={this.state.user.profilePicture} style={{ "border": "5px solid", "width": "220px", "height": "238px" }}></img>}
+                                    {/* {this.state.user && <img id="pro_pic" alt="Girl in a jacket" src={this.state.user.profilePicture} style={{ "border": "5px solid", "width": "220px", "height": "238px" }}></img>} */}
                                     <form onSubmit={this.changeImage}>
                                         <div className="row" style={{ "align-items": "center" }}>
                                             <label for="img" style={{ "color": "#007bff", "font-size": "1.5rem", "padding-right": "20px" }}>Select image:</label>
