@@ -188,7 +188,8 @@ class create_playlist extends React.Component {
                 duration = timeMin + ":" + (timeSec < 10 ? '0' : '') + timeSec
                 this.state.results.push({
                     title: res.data.tracks.items[i].name, artist: res.data.tracks.items[i].artists[0].name,
-                    duration: duration, uri: res.data.tracks.items[i].preview_url, image: res.data.tracks.items[i].album.images[0].url
+                    duration: duration, uri: res.data.tracks.items[i].preview_url, spotifyURI: res.data.tracks.items[i].uri,
+                    image: res.data.tracks.items[i].album.images[0].url
                 })
             }
             this.setState({ songName: "" })
@@ -278,9 +279,19 @@ class create_playlist extends React.Component {
             .then(res => {
                 console.log(res.data)
 
-                axios.post('/auth/addCreatedPlaylist', { userId: this.state.userId, playlistId: res.data.playlist._id })
+                axios.post('/auth/updateSocketId', { playlistId: res.data.playlist._id, socketId: res.data.playlist._id })
                     .then(res => {
                         console.log(res.data)
+                    })
+                    .catch(error => {
+                        console.log(error)
+                    });
+
+                axios.post('/auth/addCreatedPlaylist', { userId: this.state.userId, playlistId: res.data.playlist._id })
+                    .then(res => {
+                        console.log(res.data.user)
+                        sessionStorage.setItem('user', JSON.stringify(res.data.user))
+                        this.props.updateUser()
                         this.props.history.push({
                             pathname: '/library',
                             state: { userId: res.data.user._id}
@@ -343,7 +354,7 @@ class create_playlist extends React.Component {
                         </div>
                         <div className="col-6 justify-content-center ">
                             <div className="search_container d-flex  align-items-center   ">
-                                <input id="search_input" type="text" placeholder="Search by Song, Lyrics or Artist" onChange={(e) => this.updateSongName(e)} value={this.state.songName}></input>
+                                <input id="search_input" type="text" placeholder="Search by Song Name or Artist" onChange={(e) => this.updateSongName(e)} value={this.state.songName}></input>
                                 <div className="table-wrapper-scroll-y my-custom-scrollbar height:inherit" style={{ "minHeight": "40vh", "maxHeight": "50vh", "width": "95%" }}>
                                     <table scope="col" className="table table-dark table-fixed" id="search-table" >
                                         <thead>

@@ -27,7 +27,9 @@ router.post('/register', function (req, res) {
       email: email,
       library: [], 
       likedPlaylists:[],
-      friends: []
+      friends: [],
+      profilePicture: "",
+      addedPlaylists:[]
     });
 
     User.findOne({
@@ -87,13 +89,13 @@ router.post('/addPlaylist', function (req, res) {
   let playlistId = req.body.playlistId;
   // console.log("in add playlist", playlistId);
 
-  User.updateOne(
+  User.findOneAndUpdate(
     { "_id": userId },
-    { "$push": { "addedPlaylists": playlistId } },
+    { "$push": { "addedPlaylists": playlistId } } ,{new: true},
     // {$push: {"library.$": playlistId}},
     function (err, user) {
       if (err) throw err;
-      // console.log(user)
+      console.log(user)
       res.json({ user: user });
     }
   )
@@ -104,9 +106,9 @@ router.post('/addCreatedPlaylist', function (req, res) {
   let playlistId = req.body.playlistId;
   // console.log("in add playlist", playlistId);
 
-  User.updateOne(
+  User.findOneAndUpdate(
     { "_id": userId },
-    { "$push": { "library": playlistId } },
+    { "$push": { "library": playlistId } },{new: true},
     // {$push: {"library.$": playlistId}},
     function (err, user) {
       if (err) throw err;
@@ -257,6 +259,19 @@ router.post('/createPlaylist', function(req, res) {
     // console.log("success", res)
     res.json({playlist: playlist})
   });
+})
+
+router.post('/updateSocketId', function (req, res) {
+  let playlistId = req.body.playlistId;
+  let socketId = req.body.socketId;
+  playlist.findByIdAndUpdate(
+    { "_id": playlistId },
+    {  "socketId": socketId } ,{new: true},
+    function (err, playlist) {
+      if (err) throw err;
+      res.json({ playlist: playlist });
+    }
+  )
 })
 
 router.post('/addMessage', function (req, res) {

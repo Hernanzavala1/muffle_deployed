@@ -19,6 +19,7 @@ class LibraryCard extends React.Component {
             playlist: null,
             isLoading: true,
             modalShow: false,
+            modalShowD: false,
             friends: [],
             shareWith: [],
             checked: [],
@@ -101,21 +102,36 @@ class LibraryCard extends React.Component {
         }
     }
 
-    removeFromLibrary = () => {
+    removeFromLibrary = (e) => {
+        if(this.state.userId === this.state.playlist.userID) {
+            console.log("DELETING")
+            this.handleModalD(e, true)
+            return
+        }
+
         console.log("in remove from library");
         this.state.library.splice(this.state.library.indexOf(this.state.playlist._id), 1);
         console.log(this.state.library, " new library")
         axios.post('/auth/removeAddedPlaylist', { userId: this.state.userId, library: this.state.library })
             .then(res => {
                 console.log("removed from library")
-                console.log(res.data)
+                // console.log(res.data)
+                sessionStorage.setItem('user', JSON.stringify(res.data.user))
+                this.props.updateUser()
             })
             .catch(error => {
                 console.log(error)
             });
         this.props.updateLibrary(this.state.library);
     }
+    deletePlaylist = (e) => {
+
+    }
     changeVisibility = () => {
+        if(this.state.userId !== this.state.playlist.userID) {
+            return
+        }
+
         let visibility = this.state.playlist.public;
         console.log(visibility, "is the current state")
         axios.post('/auth/playlistPublic', { playlistId: this.state.playlist._id, public: !visibility }).then((res) => {
@@ -143,6 +159,11 @@ class LibraryCard extends React.Component {
             })
         }
 
+    }
+    handleModalD(e, value) {
+        e.preventDefault();
+
+        this.setState({ modalShowD: value })
     }
     checked = (e, id, index) => {
         e.preventDefault();
@@ -190,6 +211,16 @@ class LibraryCard extends React.Component {
             lock = "fa fa-lock"
             linkTo = `/player/${this.state.playlist._id}`
         }
+        var cursor, remove;
+        if(this.state.userId !== this.state.playlist.userID) {
+            console.log(this.state.playlist.userID)
+            cursor = "not-allowed"
+            remove = "fas fa-minus-circle"
+        }
+        else {
+            cursor = "pointer"
+            remove = "fas fa-trash-alt"
+        }
 
         return (
             <div>
@@ -198,13 +229,13 @@ class LibraryCard extends React.Component {
 
                         <Card id='library-card-container'>
                             <div id='hover-container'>
-                                <Link onClick={() => this.removeFromLibrary()} style={{ textDecoration: 'none' }}>
-                                    <i className="fas fa-minus-circle" style={{ "paddingRight": "1rem", "fontSize": "2rem", "color": "white" }}></i>
+                                <Link id="remove-link" onClick={(e) => this.removeFromLibrary(e)} style={{ textDecoration: 'none' }}>
+                                    <i className={remove} style={{ "paddingRight": "1rem", "fontSize": "2rem", "color": "white" }}></i>
                                 </Link>
-                                <Link onClick={() => this.changeVisibility()} style={{ textDecoration: 'none' }}>
-                                    <i className={lock} style={{ "fontSize": "2rem", "color": "white" }}></i>
+                                <Link id="visibility-link" onClick={() => this.changeVisibility()} style={{ "textDecoration": 'none', "cursor":`${cursor}` }}>
+                                    <i className={lock} style={{ "fontSize": "2rem", "color": "white"}}></i>
                                 </Link>
-                                <Link style={{ textDecoration: 'none' }}>
+                                <Link id="share-link" style={{ textDecoration: 'none' }}>
                                     <i onClick={(e) => { this.handleModal(e, true) }} className="fa fa-share-alt" style={{ "paddingLeft": "1.5rem", "fontSize": "2rem", "color": "white", display: "block", paddingTop: "1rem" }}></i>
                                 </Link>
                             </div>
@@ -230,9 +261,9 @@ class LibraryCard extends React.Component {
                     </div>
                 </Link>
                 <Modal
-                    data-backdrop="static"
-                    data-keyboard="false"
-                    show={this.state.modalShow}
+                    backdrop="static"
+                    keyboard="false"
+                    show={this.state.modalShow} 
                 >
                     <Modal.Header> Share playlist</Modal.Header>
                     <Modal.Body>
@@ -258,6 +289,21 @@ class LibraryCard extends React.Component {
                     <Modal.Footer>
                         <Button className="secondary" onClick={(e) => { this.sharePlaylist(e) }} > share </Button>
                         <Button className='secondary' onClick={(e) => this.handleModal(e, false)} data-dismiss="modal"> close </Button>
+                    </Modal.Footer>
+                </Modal>
+
+                <Modal
+                    backdrop="static"
+                    keyboard="false"
+                    show={this.state.modalShowD}
+                >
+                    <Modal.Header>Are you sure?</Modal.Header>
+                    <Modal.Body>
+                        <h3>Are you sure you want to delete {this.state.playlist.name}?</h3>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button className="secondary" onClick={(e) => { this.deletePlaylist(e) }}>Delete</Button>
+                        <Button className='secondary' onClick={(e) => this.handleModalD(e, false)} data-dismiss="modal">Close</Button>
                     </Modal.Footer>
                 </Modal>
             </div>

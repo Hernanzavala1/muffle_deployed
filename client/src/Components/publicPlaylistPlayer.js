@@ -17,11 +17,6 @@ import GeniusFetcher from 'genius-lyrics-fetcher';
 import io from 'socket.io-client';
 var socket = io()
 const client = new GeniusFetcher.Client('zvhzjfMVoloDm_8z6fNJADaVx2dud5H3Xn_g0btOZFh3FpTJhnoinEYyZYddlGrF');
-// const socket = socketIOClient.connect("http://muffle-deployment1.herokuapp.com/");
-// const socket = require('socket.io-client')('http://muffle-deployment1.herokuapp.com/', {
-//   transports: ['websocket'],
-//   rejectUnauthorized: false
-// })
 
 class publicPlaylistPlayer extends React.Component {
   constructor(props) {
@@ -50,13 +45,17 @@ class publicPlaylistPlayer extends React.Component {
     axios.post('/auth/getPlaylist', { playlistId }).then(res => {
       let length = (this.state.friends).length;
       var arr = Array(length).fill(false);
+      sessionStorage.setItem('playlistInfo', JSON.stringify( res.data.playlist))
+      this.props.updatePlaylist();
       this.setState({ playlist: res.data.playlist, checked: arr, messageHistory: res.data.playlist.messageHistory }, () => {
         console.log("we are updating the playlist from online")
-        this.props.updatePlaylist(this.state.playlist);
+        // this.props.updatePlaylist(this.state.playlist);
         document.getElementById("ul_chat").scrollTop = document.getElementById("ul_chat").scrollHeight;
+        this.updatePlaylist()
       })
       if (this.state.playlist == null) {
-        this.props.updatePlaylist(data.publicPlayer.publicPlaylist.playlist);
+        sessionStorage.setItem('playlistInfo', JSON.stringify( data.publicPlayer.publicPlaylist.playlist))
+        this.props.updatePlaylist();
       }
 
       axios.post('/auth/getUser', { userId: this.props.userID }).then((res) => {
@@ -113,7 +112,10 @@ class publicPlaylistPlayer extends React.Component {
         Object.assign(tempA, this.state.messageHistory)
         tempA.push(mObj)
         console.log("HEY");
-        this.setState({ messageHistory: tempA }, function () { document.getElementById("ul_chat").scrollTop = document.getElementById("ul_chat").scrollHeight; })
+        this.setState({ messageHistory: tempA }, () => { 
+          document.getElementById("ul_chat").scrollTop = document.getElementById("ul_chat").scrollHeight;
+          this.updatePlaylist()
+        })
       }
     });
   }

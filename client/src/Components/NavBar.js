@@ -18,7 +18,8 @@ class NavBar extends React.Component {
         document.getElementById("network-link").style.cursor = "default";
         document.getElementById("profile-link").style.cursor = "default";
         var ele = document.getElementsByClassName("Nav_item");
-        localStorage.clear();
+        sessionStorage.clear();
+        this.props.clear()
     }
     componentDidUpdate(prevProps) {
         if(this.props.userID != "") {

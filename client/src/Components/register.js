@@ -78,6 +78,8 @@ class register extends React.Component {
     axios.post('/auth/register', { email, password, profileName })
       .then(res => {
         console.log(res.data)
+        sessionStorage.setItem('user', JSON.stringify(res.data.user))
+        this.props.updateUser()
         this.setState({ message: '' })
         this.props.updateID(res.data.user._id);
         this.props.history.push({

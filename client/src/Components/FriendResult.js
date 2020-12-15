@@ -47,6 +47,7 @@ class FriendResult extends React.Component {
         var tempA = [a1, a2]
 
          axios.all(tempA).then(axios.spread((...responses) => {
+             sessionStorage.removeItem('user')
             this.props.history.push({
                 pathname: '/Network'
               })

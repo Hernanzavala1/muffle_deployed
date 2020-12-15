@@ -3,6 +3,12 @@ import './css/MusicPlayer.css'
 import data from '../data.json'
 import { Link } from 'react-router-dom';
 import axios from 'axios'
+import Script from 'react-load-script'
+import qs from 'qs'
+
+
+var player2;
+var timeUpdate;
 class MusicPlayer extends React.Component {
     constructor(props) {
         super(props);
@@ -13,18 +19,68 @@ class MusicPlayer extends React.Component {
             currentArtist: "",
             length: 0,
             currentTime: 0,
-            currentVolume: 0.5,
+            currentVolume: 0.2,
             playlist: data.playlistTest.list,
-            playlistID: data.playlistTest._id
+            playlistID: data.playlistTest._id,
+            deviceID: null,
+            token:this.props.accessToken
+            // token: 'BQCJA1hWwHxgTJSB-N0R7PINl0dxd4R9QgpoE_L7HOdzQ8tp-Yq41e3_WovA9Nb4E01bZ2LkwizMp_-9gXBUl82GQItZQgoqImmDUa5ngzIoa6s11RWWWBkBEMy3ux1EkrlRenPKw5TbtZTF5eKsvSKNwUvTFWKMEv4xxXPaZSKUNCFBFaTfecwjvsJGK5Zq2idfnQziketp'
         }
-        console.log(this.state.playlist);
+    }
+    handleScriptLoad = () => {
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            const player = new window.Spotify.Player({
+                name: 'Muffle Spotify Player',
+                getOAuthToken: cb => { cb(this.props.accessToken); },
+                volume: 0.2
+            });
 
+            // Error handling
+            player.addListener('initialization_error', ({ message }) => { console.error(message); });
+            player.addListener('authentication_error', ({ message }) => { console.error(message); });
+            player.addListener('account_error', ({ message }) => { console.error(message); });
+            player.addListener('playback_error', ({ message }) => { console.error(message); });
+
+            // Playback status updates
+            player.addListener('player_state_changed', state => {
+                if (state) {
+                    console.log(state);
+                    this.state.currentTime = state.position;
+                    this.state.length = state.duration;
+                    this.updateTimelineSpotify();
+                }
+            });
+
+            // Ready
+            player.addListener('ready', ({ device_id }) => {
+                console.log('Ready with Device ID', device_id);
+                this.setState({ deviceID: device_id });
+            });
+
+            // Not Ready
+            player.addListener('not_ready', ({ device_id }) => {
+                console.log('Device ID has gone offline', device_id);
+            });
+
+            // Connect to the player!
+            player.connect();
+            player2 = player;
+        };
     }
     play = () => {
         if (this.props.currentPlaylist == "") {
             return;
         }
-        if (this.state.length != 0) {
+        //if spotify exists, play from sdk, if song already in play, resume
+        if (this.props.accessToken) {
+            if (this.state.length != 0) {
+                player2.resume();
+                timeUpdate = setInterval(() => { this.updateTimelineSpotify(1000) }, 1000);
+            }
+            else
+                this.playFromSDK(this.state.playlist[this.state.currentSong].spotifyURI);
+        }
+        else if (this.state.length != 0) {
             this.song.play();
         }
         else {
@@ -38,72 +94,101 @@ class MusicPlayer extends React.Component {
         document.getElementById("pause-button").style.display = "block";
         document.getElementById("play-button").style.display = "none";
         this.setState({ currentName: this.state.playlist[this.state.currentSong].title, currentArtist: this.state.playlist[this.state.currentSong].artist, length: this.state.playlist[this.state.currentSong].duration }, () => {
-            this.props.updateCurrentSongInfo({ currentName: this.state.currentName, currentArtist: this.state.currentArtist })
+            var songObj ={ currentName: this.state.currentName, currentArtist: this.state.currentArtist }
+            sessionStorage.setItem('songName', JSON.stringify( songObj))
+            this.props.updateCurrentSongInfo()
+            var songUri ={song:this.state.playlist[this.state.currentSong].uri, songObj:this.state.playlist[this.state.currentSong]}
+            sessionStorage.setItem('songInfo',  JSON.stringify(songUri));
+            this.props.updateSong();
+            // this.props.updateCurrentSongInfo({ currentName: this.state.currentName, currentArtist: this.state.currentArtist })
         });
     }
     playFromPlaylist = (song) => {
-        if (this.state.play) {
+        if (this.props.accessToken) {
+            player2.pause();
+        }
+        else if (this.state.play) {
             this.song.pause();
         }
         //if not same playlist and something playing
-        this.setState({ playlist: this.props.currentPlaylist.songs, playlistID: this.props.currentPlaylist._id }, function () {
+        this.setState({ currentPlaylist: this.props.currentPlaylist, playlist: this.props.currentPlaylist.songs, playlistID: this.props.currentPlaylist._id }, function () {
             for (var i = 0; i < this.state.playlist.length; i++) {
                 if (song.uri === this.state.playlist[i].uri) {
                     this.setState({ currentSong: i }, () => {
-                        this.song = new Audio(this.state.playlist[this.state.currentSong].uri);
-                        this.song.play();
-                        this.setState({ play: true });
-                        this.song.volume = this.state.currentVolume;
-                        this.song.ontimeupdate = this.updateTimeline;
+                        //if spotify exists, play from sdk instead
+                        if (this.props.accessToken) {
+                            this.playFromSDK(song.spotifyURI);
+                        }
+                        else {
+                            this.song = new Audio(this.state.playlist[this.state.currentSong].uri);
+                            this.song.play();
+                            this.setState({ play: true });
+                            this.song.volume = this.state.currentVolume;
+                            this.song.ontimeupdate = this.updateTimeline;
+                        }
                         console.log(this.state.playlist);
                         document.getElementById("pause-button").style.display = "block";
                         document.getElementById("play-button").style.display = "none";
                         this.setState({ currentName: this.state.playlist[this.state.currentSong].title, currentArtist: this.state.playlist[this.state.currentSong].artist, length: this.state.playlist[this.state.currentSong].duration }, () => {
-                            this.props.updateCurrentSongInfo({ currentName: this.state.currentName, currentArtist: this.state.currentArtist })
+                            var songObj ={ currentName: this.state.currentName, currentArtist: this.state.currentArtist };
+                            sessionStorage.setItem('songName', JSON.stringify( songObj));
+                            this.props.updateCurrentSongInfo();
+                            var songUri ={song:this.state.playlist[this.state.currentSong].uri, songObj:this.state.playlist[this.state.currentSong]}
+                            sessionStorage.setItem('songInfo',  JSON.stringify(songUri));
+                            this.props.updateSong();
                         });
                     })
                 }
             }
         }
         );
-        // else {
-        //     this.setState({playlist: this.props.currentPlaylist.songs}, function() {
-        //         this.song = new Audio(this.state.playlist[this.state.currentSong].uri);
-        //         this.song.play();
-        //         this.setState({play: true});
-        //         this.song.volume = this.state.currentVolume;
-        //         this.song.ontimeupdate = this.updateTimeline;
-        //         console.log(this.state.playlist);
-        //         document.getElementById("pause-button").style.display = "block";
-        //         document.getElementById("play-button").style.display = "none";
-        //         this.setState({ currentName: this.state.playlist[this.state.currentSong].title, currentArtist: this.state.playlist[this.state.currentSong].artist, length: this.state.playlist[this.state.currentSong].duration});
-        //     })
-        // }
+    
     }
     pause = () => {
+        //if spotify is enabled, pause the player instead
+        if (this.props.accessToken) {
+            player2.pause();
+            clearInterval(timeUpdate);
+        }
+        else {
+            this.song.pause();
+        }
         this.setState({ play: false });
-        this.song.pause();
         document.getElementById("pause-button").style.display = "none";
         document.getElementById("play-button").style.display = "block";
     }
     next = () => {
+
         if (this.props.currentPlaylist == "") {
             return;
         }
-        this.song.pause();
         if (this.state.currentSong == this.state.playlist.length - 1) {
             this.state.currentSong = 0;
         }
         else {
             this.state.currentSong += 1;
         }
-        this.song = new Audio(this.state.playlist[this.state.currentSong].uri);
-        this.song.ontimeupdate = this.updateTimeline;
+        //if spotify is enabled, play the next song using spotify's player (playfromsdk using next uri), else pause the current html song
+        if (this.props.accessToken) {
+            player2.pause();
+            this.playFromSDK(this.state.playlist[this.state.currentSong].spotifyURI);
+        }
+        else {
+            this.song.pause();
+            this.song = new Audio(this.state.playlist[this.state.currentSong].uri);
+            this.song.ontimeupdate = this.updateTimeline;
+            this.song.volume = this.state.currentVolume;
+            this.song.play();
+        }
+
         this.setState({ currentName: this.state.playlist[this.state.currentSong].title, currentArtist: this.state.playlist[this.state.currentSong].artist, length: this.state.playlist[this.state.currentSong].duration }, () => {
-            this.props.updateCurrentSongInfo({ currentName: this.state.currentName, currentArtist: this.state.currentArtist })
+            var songObj ={ currentName: this.state.currentName, currentArtist: this.state.currentArtist };
+            sessionStorage.setItem('songName', JSON.stringify( songObj));
+            this.props.updateCurrentSongInfo();
+            var songUri ={song:this.state.playlist[this.state.currentSong].uri, songObj:this.state.playlist[this.state.currentSong]}
+            sessionStorage.setItem('songInfo',  JSON.stringify(songUri));
+            this.props.updateSong();
         });
-        this.song.volume = this.state.currentVolume;
-        this.song.play();
         document.getElementById("pause-button").style.display = "block";
         document.getElementById("play-button").style.display = "none";
     }
@@ -111,20 +196,33 @@ class MusicPlayer extends React.Component {
         if (this.props.currentPlaylist == "") {
             return;
         }
-        this.song.pause();
         if (this.state.currentSong == 0) {
             this.state.currentSong = this.state.playlist.length - 1;
         }
         else {
             this.state.currentSong -= 1;
         }
-        this.song = new Audio(this.state.playlist[this.state.currentSong].uri);
-        this.song.ontimeupdate = this.updateTimeline;
+        if (this.props.accessToken) {
+            player2.pause();
+            this.playFromSDK(this.state.playlist[this.state.currentSong].spotifyURI);
+        }
+        else {
+            this.song.pause();
+            this.song = new Audio(this.state.playlist[this.state.currentSong].uri);
+            this.song.ontimeupdate = this.updateTimeline;
+            this.song.volume = this.state.currentVolume;
+            this.song.play();
+        }
+
         this.setState({ currentName: this.state.playlist[this.state.currentSong].title, currentArtist: this.state.playlist[this.state.currentSong].artist, length: this.state.playlist[this.state.currentSong].duration }, () => {
-            this.props.updateCurrentSongInfo({ currentName: this.state.currentName, currentArtist: this.state.currentArtist })
+            var songObj ={ currentName: this.state.currentName, currentArtist: this.state.currentArtist };
+            sessionStorage.setItem('songName', JSON.stringify( songObj));
+            this.props.updateCurrentSongInfo();
+            var songUri ={song:this.state.playlist[this.state.currentSong].uri, songObj:this.state.playlist[this.state.currentSong]}
+            sessionStorage.setItem('songInfo',  JSON.stringify(songUri));
+            this.props.updateSong();
         });
-        this.song.volume = this.state.currentVolume;
-        this.song.play();
+
         document.getElementById("pause-button").style.display = "block";
         document.getElementById("play-button").style.display = "none";
     }
@@ -136,7 +234,24 @@ class MusicPlayer extends React.Component {
             this.next();
         }
     }
+    updateTimelineSpotify = (time) => {
+        var temp = this.state.currentTime;
+        if (time)
+            temp += time;
+        this.setState({ currentTime: temp });
+        var progress = document.getElementsByClassName("progress-bar")[0];
+        var percent = (temp / this.state.length) * 100;
+        progress.style.width = percent + "%";
+        console.log(percent);
+        if (percent >= 99.9) {
+            this.next();
+        }
+    }
     updateVolume = (event) => {
+        //if spotify player, set volume for it.
+        if (this.props.accessToken) {
+            player2.setVolume(event.target.value / 100);
+        }
         if (this.song == null) {
             this.state.currentVolume = event.target.value / 100;
         }
@@ -145,38 +260,103 @@ class MusicPlayer extends React.Component {
             this.state.currentVolume = this.song.volume;
         }
     }
+    //todo: hook up player to my player, 
+    playFromSDK = (uri) => {
+        const data_post = {
+            "uris": [uri] // replace with uri from playlist
+        };
+        const headers = {
+            headers: {
+                'Content-Type': 'application/json',
+                "Authorization": "Bearer " + this.props.accessToken // NEEDS SCOPES: user-modify-playback-state, user-read-playback-state, possibly more
+            }
+        };
+        axios.put(
+            'https://api.spotify.com/v1/me/player/play?device_id=' + this.state.deviceID,
+            data_post,
+            headers
+        ).then((response) => {
+            console.log(response);
+            clearInterval(timeUpdate);
+            timeUpdate = setInterval(() => { this.updateTimelineSpotify(500) }, 500);
+        }).catch(err => {
+            console.log(err)
+        })
+        var songUri ={song:this.state.playlist[this.state.currentSong].uri, songObj:this.state.playlist[this.state.currentSong]}
+        sessionStorage.setItem('songInfo',  JSON.stringify(songUri));
+        this.props.updateSong();
+    }
     componentDidMount = () => {
         console.log(this.props.currentPlaylist);
-
+        const token = JSON.parse(sessionStorage.getItem("accessToken"));
+        const playlist = JSON.parse(sessionStorage.getItem("playlistInfo"));
+        const song = JSON.parse(sessionStorage.getItem("songInfo"));
+        if (token) {
+            var loadScript = function () {
+                var script = document.createElement('script');
+                script.src = "https://sdk.scdn.co/spotify-player.js";
+                var body = document.getElementsByTagName('body')[0];
+                body.appendChild(script);
+            }
+            loadScript();
+            this.handleScriptLoad();
+        }
+        if (playlist !== null) {
+            console.log("ASDASD");
+            this.setState({currentPlaylist: playlist, playlist: playlist.songs});
+        }
+        if (song != null) {
+            this.setState({currentName: song.songObj.title, currentArtist: song.songObj.artist});
+            for (var i = 0; i < playlist.songs.length; i++) {
+                if (song.songObj.uri === playlist.songs[i].uri) {
+                    this.setState({currentSong: i});
+                }
+            }
+        }
     }
-
+    componentDidUpdate(prevProps) {
+        if (prevProps.accessToken !== this.props.accessToken) {
+            var loadScript = function () {
+                var script = document.createElement('script');
+                script.src = "https://sdk.scdn.co/spotify-player.js";
+                var body = document.getElementsByTagName('body')[0];
+                body.appendChild(script);
+            }
+            loadScript();
+            this.handleScriptLoad();
+        }
+    }
+    componentDidUpdate =(prevProps, prevState, snapshot)=>{
+        
+    }
     render() {
         let bool = this.props.currentPlaylist.public;
         let id = this.props.currentPlaylist._id;
-        console.log(this.state.playlist)
-        console.log(this.props.currentPlaylist)
+        let image = this.state.playlist[this.state.currentSong];
+        if (image == null)
+            image = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+        else
+            image = this.state.playlist[this.state.currentSong].image;
         var Child;
         if (id === undefined) {
             Child = (
-                <Link to={{pathname: `/home`, state: {source: '/home'}}} id="goBackLink" ><label id="playlist_back">Back to Playlist</label></Link>
+                <Link to={{ pathname: `/home`, state: { source: '/home' } }} id="goBackLink" ><label id="playlist_back">Back to Playlist</label></Link>
             )
         }
-        if (bool) {
-            console.log("we re in the public playlist ")
-            console.log(this.state.currentName, this.state.currentArtist)
+        else if (bool) {
             //    this.props.updateCurrentSongInfo({currentName: this.state.currentName, currentArtist: this.state.currentArtist})
             Child = (
-                <Link to={{pathname: `/publicPlayer/${id}`, state: {source: '/home'}}} id="goBackLink" ><label id="playlist_back">Back to Playlist</label></Link>
+                <Link to={{ pathname: `/publicPlayer/${id}`, state: { source: '/home' } }} id="goBackLink" ><label id="playlist_back">Back to Playlist</label></Link>
             )
         }
         else {
-            console.log("we re in the private  playlist ")
             Child = (
-                <Link to={{pathname: `/player/${id}`, state: {source: '/home'}}} id="goBackLink" ><label id="playlist_back">Back to Playlist</label></Link>
+                <Link to={{ pathname: `/player/${id}`, state: { source: '/home' } }} id="goBackLink" ><label id="playlist_back">Back to Playlist</label></Link>
             )
         }
         return (
             <div className='player_box'>
+                {/* <Script url="https://sdk.scdn.co/spotify-player.js" onLoad={this.handleScriptLoad}></Script> */}
                 <div className="Song_info">
                     <div className='goBack'>
                         <i className="fas fa-arrow-left"></i>
@@ -217,10 +397,9 @@ class MusicPlayer extends React.Component {
                     </div>
                 </div>
                 <div className="song_img">
-                    <img className="album_img" src={this.state.playlist[this.state.currentSong].image} onerror="this.onerror=null; this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='" />
+                    <img className="album_img" src={image} onerror="this.onerror=null; this.src='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='" />
                 </div>
             </div>
-
         );
     }
 }

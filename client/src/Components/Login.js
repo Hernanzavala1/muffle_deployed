@@ -8,6 +8,7 @@ class Login extends React.Component {
 
   constructor(props) {
     super(props);
+    // axios.defaults.baseURL= "http://localhost:5000"
     this.onChangeEmail = this.onChangeEmail.bind(this);
     this.onChangePassword = this.onChangePassword.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
@@ -22,7 +23,7 @@ class Login extends React.Component {
 
   componentDidMount() {
     document.getElementById("app").style.height = "100vh";
-    const loggedInUser = localStorage.getItem("user");
+    const loggedInUser = sessionStorage.getItem("user");
     if (loggedInUser) {
       const foundUser = JSON.parse(loggedInUser);
       console.log(foundUser)
@@ -33,6 +34,11 @@ class Login extends React.Component {
      })
     }
     
+    
+  }
+
+  componentDidUpdate=()=>{
+    console.log("We are refreshing this paage !!")
   }
 
   onChangeEmail(e) {
@@ -87,12 +93,11 @@ class Login extends React.Component {
             .then(res => {
               console.log("in login ")
               console.log(res.data)
-              this.setState({ message: ''},()=>{
-                localStorage.setItem('user', JSON.stringify(res.data.user))
-              })
-              // TODO: ID DOESNT UPDATE
+              sessionStorage.setItem('user', JSON.stringify(res.data.user))
               this.props.updateID(res.data.userId);
               this.props.updateUser(res.data.user)
+              this.setState({ message: ''})
+              // TODO: ID DOESNT UPDATE
                this.props.history.push({
                 pathname: '/home',
                 state: { userId: res.data.userId}

@@ -21,14 +21,20 @@ class Library extends React.Component {
 
   componentDidMount() {
     document.getElementById("app").style.height = "calc(100vh - 90px)";
-    axios.post('/auth/getUser', {userId:this.state.userId}).then(res=>{
-        console.log(res.data.user)
-        console.log(res.data.user.library)
-        this.setState({user: res.data.user})
-        this.setState({isLoading: false})
-    }).catch(err=>{
-        console.log(err)
-    })
+    const loggedInUser = sessionStorage.getItem("user");
+    if (loggedInUser) {
+        const foundUser = JSON.parse(loggedInUser);
+        this.setState({ user:foundUser,isLoading: false })
+        return;
+    }
+    // axios.post('/auth/getUser', {userId:this.state.userId}).then(res=>{
+    //     console.log(res.data.user)
+    //     console.log(res.data.user.library)
+    //     this.setState({user: res.data.user})
+    //     this.setState({isLoading: false})
+    // }).catch(err=>{
+    //     console.log(err)
+    // })
   }
  
   render() {
@@ -52,13 +58,13 @@ class Library extends React.Component {
                             </div>
                         </div>
                         <div className='playlists-cards'>
-                            <SimpleLibraryList list={this.state.user.library} user={this.state.user} userId={this.state.userId}></SimpleLibraryList>
+                            <SimpleLibraryList updateUser={this.props.updateUser} list={this.state.user.library} user={this.state.user} userId={this.state.userId}></SimpleLibraryList>
                         </div>
                     </div>
                     <div className='playlists'>
                         <h2 className="library-labels">Added Playlists</h2>
                         <div className='playlists-cards'>
-                            <SimpleLibraryList list={this.state.user.addedPlaylists} user={this.state.user} userId={this.state.userId}></SimpleLibraryList>
+                            <SimpleLibraryList updateUser={this.props.updateUser} list={this.state.user.addedPlaylists} user={this.state.user} userId={this.state.userId}></SimpleLibraryList>
                         </div>
                     </div>
                 </div>

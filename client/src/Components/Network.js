@@ -12,13 +12,7 @@ import Tab from 'react-bootstrap/Tab'
 import { Button, Modal } from 'react-bootstrap'
 import Alert from 'react-bootstrap/Alert'
 import io from 'socket.io-client';
-var socket = io();
-// const socket = socketIOClient.connect("http://muffle-deployment1.herokuapp.com/");
-
-// const socket = require('socket.io-client')('http://muffle-deployment1.herokuapp.com/', {
-//   transports: ['websocket'],
-//   rejectUnauthorized: false
-// })
+var socket = io()
 
 class Network extends React.Component {
 
@@ -45,13 +39,16 @@ class Network extends React.Component {
 
     componentDidMount = () => {
         document.getElementById("app").style.height = "calc(100vh - 90px)";
-
-        axios.post('/auth/getUser', { userId: this.props.userId }).then(res => {
-            this.setState({ user: res.data.user }, () => { this.updateFriendsList(); this.updateGroupChats() })
-        }).catch(err => {
-            console.log(err)
-        })
-
+        if (!this.loadState()) {
+            console.log("getting the user from DB")
+            axios.post('/auth/getUser', { userId: this.props.userId }).then(res => {
+            sessionStorage.setItem('user', JSON.stringify(res.data.user))
+            this.props.updateUser(res.data.user)
+                this.setState({ user: res.data.user }, () => { this.updateFriendsList(); this.updateGroupChats() })
+            }).catch(err => {
+                console.log(err)
+            })
+        }
         var tempA = []
         socket.on('message', data => {
             if (data.channel == this.state.channel) {
@@ -64,17 +61,40 @@ class Network extends React.Component {
                 this.setState({ messageHistory: tempA }, this.updateUser)
             }
         });
-        
-        if(this.props.location.state) {
-            this.setState({ alertMessage: "That user doesn't exist!", alertShow: true  })
+        if (this.props.location.state) {
+            this.setState({ alertMessage: "That user doesn't exist!", alertShow: true })
         }
-    }
 
+        // this.interval = setInterval(() => this.reLoadUser, 6000);
+        this.interval=setInterval(this.reLoadUser, 100000)
+    }
+    reLoadUser = () => {
+        axios.post('/auth/getUser', { userId: this.state.user._id }).then(res => {
+            sessionStorage.setItem('user', JSON.stringify(res.data.user))
+            this.props.updateUser(res.data.user)
+            this.setState({ user: res.data.user, friends: [],groupChats: [], },() => { this.updateFriendsList(); this.updateGroupChats()})
+        }).catch(err => {
+            console.log(err)
+        })
+    }
+    componentWillUnmount=()=> {
+        clearInterval(this.interval);
+      }
+    loadState = () => {
+        const userInfo = sessionStorage.getItem("user");
+        if (userInfo) {
+            console.log("getting the user from sessionStorage")
+            const foundUser = JSON.parse(userInfo);
+            this.setState({ user: foundUser }, () => { this.updateFriendsList(); this.updateGroupChats() })
+            return true;
+        }
+        return false
+    }
     updateFriendsList = () => {
-        console.log(this.state)
         var tempA = []
         Object.assign(tempA, this.state.friends)
         var tempP = []
+        console.log(this.state.user.friends.length)
         for (var i = 0; i < this.state.user.friends.length; i++) {
             tempP.push(axios.post('/auth/getUser', { userId: this.state.user.friends[i].friendId }))
         }
@@ -84,7 +104,9 @@ class Network extends React.Component {
                 tempA.push(responses[i].data.user)
             }
             // tempA.sort(this.compare)
-            this.setState({ isLoading: false, friends: tempA })
+            this.setState({ isLoading: false, friends: tempA }, ()=>{
+                console.log(this.state)
+            })
         })).catch(errors => {
             console.log(errors)
         })
@@ -109,8 +131,9 @@ class Network extends React.Component {
     }
 
     updateUser = () => {
-        axios.post('/auth/getUser', { userId: this.state.userId }).then(res => {
-
+        axios.post('/auth/getUser', { userId: this.state.user._id }).then(res => {
+            sessionStorage.setItem('user', JSON.stringify(res.data.user))
+            this.props.updateUser(res.data.user)
             this.setState({ user: res.data.user }, this.setChannel)
 
         }).catch(err => {
@@ -130,7 +153,7 @@ class Network extends React.Component {
 
     setChannel = () => {
         var tempA = []
-        var requests=[]
+        var requests = []
         for (var i = 0; i < this.state.currentFriend.library.length; i++) {
             requests.push(axios.post('/auth/getPlaylist', { playlistId: this.state.currentFriend.library[i] }))
         }
@@ -138,8 +161,8 @@ class Network extends React.Component {
             for (var i = 0; i < responses.length; i++) {
                 tempA.push(responses[i].data.playlist)
             }
-                this.setState({ theirPlaylists: tempA }, ()=> {document.getElementById("ul_chat").scrollTop = document.getElementById("ul_chat").scrollHeight;})
-        })).catch(err=>{
+            this.setState({ theirPlaylists: tempA }, () => { document.getElementById("ul_chat").scrollTop = document.getElementById("ul_chat").scrollHeight; })
+        })).catch(err => {
             console.log(err)
         })
 
@@ -165,7 +188,7 @@ class Network extends React.Component {
         this.props.history.push({
             pathname: `/publicPlayer/${f._id}`,
             state: { source: '/network' }
-          })
+        })
     }
 
     onChangeMessage = (e) => {
@@ -186,19 +209,20 @@ class Network extends React.Component {
         Object.assign(tempA, this.state.messageHistory)
         tempA.push(mObj)
 
-        axios.post('/auth/addMessage', { userId: this.state.userId, friendId: this.state.currentFriend._id, message: mObj }).then(res => {
+        axios.post('/auth/addMessage', { userId: this.state.user._id, friendId: this.state.currentFriend._id, message: mObj }).then(res => {
             console.log("user", res.data)
-
-            this.setState({ messageHistory: tempA, message: "", user: res.data }, function() {document.getElementById("ul_chat").scrollTop = document.getElementById("ul_chat").scrollHeight;})
+            sessionStorage.setItem('user', JSON.stringify(res.data))
+            this.props.updateUser(res.data)
+            this.setState({ messageHistory: tempA, message: "", user: res.data }, function () { document.getElementById("ul_chat").scrollTop = document.getElementById("ul_chat").scrollHeight; })
         }).catch(err => {
             console.log(err)
         })
-        axios.post('/auth/addMessage', { userId: this.state.currentFriend._id, friendId: this.state.userId, message: mObj }).then(res => {
+        axios.post('/auth/addMessage', { userId: this.state.currentFriend._id, friendId: this.state.user._id, message: mObj }).then(res => {
             console.log("friend", res.data)
         }).catch(err => {
             console.log(err)
         })
-        
+
         socket.emit('chat', {
             channel: this.state.channel,
             message: this.state.message
@@ -208,23 +232,23 @@ class Network extends React.Component {
     onRemoveFriend = (e, cell, index) => {
         e.preventDefault()
         e.stopPropagation()
-        console.log(this.state.friends)
-        console.log(this.state.user)
         var friend = this.state.friends[index]
         var tempA = []
         Object.assign(tempA, this.state.user.friends)
         tempA.splice(index, 1);
-        axios.post('/auth/removeFriend', { userId: this.state.userId, friendsList: tempA })
+        axios.post('/auth/removeFriend', { userId: this.state.user._id, friendsList: tempA })
             .then(res => {
                 console.log(res.data)
-                this.setState({user: res.data.user, friends: []}, () => this.updateFriendsList())
+                sessionStorage.setItem('user', JSON.stringify(res.data.user))
+                this.props.updateUser(res.data.user)
+                this.setState({ user: res.data.user, friends: [] }, () => this.updateFriendsList())
             })
             .catch(error => {
                 console.log(error)
-        });
+            });
 
-        for(var i = 0; i < friend.friends.length; i++) {
-            if(friend.friends[i].friendId === this.state.userId) {
+        for (var i = 0; i < friend.friends.length; i++) {
+            if (friend.friends[i].friendId === this.state.user._id) {
                 index = i
                 break
             }
@@ -237,7 +261,7 @@ class Network extends React.Component {
             })
             .catch(error => {
                 console.log(error)
-        });
+            });
     }
 
     onRemoveGroup = (e, cell, index) => {
@@ -247,41 +271,42 @@ class Network extends React.Component {
         var tempA = []
         Object.assign(tempA, this.state.user.addedPlaylists)
         tempA.splice(index, 1);
-        axios.post('/auth/removeAddedPlaylist', { userId: this.state.userId, library: tempA })
+        axios.post('/auth/removeAddedPlaylist', { userId: this.state.user._id, library: tempA })
             .then(res => {
                 console.log(res.data)
-                this.setState({user: res.data.user, groupChats: []}, () => this.updateGroupChats())
+                sessionStorage.setItem('user', JSON.stringify(res.data.user))
+                this.props.updateUser(res.data.user)
+                this.setState({ user: res.data.user, groupChats: [] }, () => this.updateGroupChats())
             })
             .catch(error => {
                 console.log(error)
-        });
+            });
     }
 
     searchFriend = (e) => {
         e.preventDefault();
-        
+
         // document.getElementById("friend_input").setCustomValidity("")
         var friendName = document.getElementById("friend_input").value
-        console.log(friendName)
-        for(var i = 0; i < this.state.friends.length; i++) {
-            if(friendName === this.state.friends[i].profileName) {
+        for (var i = 0; i < this.state.friends.length; i++) {
+            if (friendName === this.state.friends[i].profileName) {
                 document.getElementById("friend_input").setCustomValidity("You can't add a person you are already friends with!")
                 friendName = ""
-                this.setState({ modalShow: false, alertMessage: "You can't add a person you are already friends with!", alertShow: true  })
+                this.setState({ modalShow: false, alertMessage: "You can't add a person you are already friends with!", alertShow: true })
                 return
             }
         }
 
-        if(friendName == "") {
+        if (friendName == "") {
             document.getElementById("friend_input").setCustomValidity("You must enter a valid profile name!")
             friendName = ""
-            this.setState({ modalShow: false, alertMessage: "You must enter a valid profile name!", alertShow: true  })
+            this.setState({ modalShow: false, alertMessage: "You must enter a valid profile name!", alertShow: true })
             return
-        } 
-        if(friendName == this.state.user.profileName) {
+        }
+        if (friendName == this.state.user.profileName) {
             document.getElementById("friend_input").setCustomValidity("You can't add yourself as a friend!")
             friendName = ""
-            this.setState({ modalShow: false, alertMessage: "You can't add yourself as a friend!", alertShow: true  })
+            this.setState({ modalShow: false, alertMessage: "You can't add yourself as a friend!", alertShow: true })
             return
         }
 
@@ -309,7 +334,7 @@ class Network extends React.Component {
     }
 
     setShow = (isOpen) => {
-        this.setState({ alertShow: false, alertMessage: ""})
+        this.setState({ alertShow: false, alertMessage: "" })
     }
 
     render() {
@@ -319,7 +344,7 @@ class Network extends React.Component {
 
         return (
             <div>
-                <Alert id="alert-box" show={this.state.alertShow} variant="alert" style={{"backgroundColor":"#007bff"}}>
+                <Alert id="alert-box" show={this.state.alertShow} variant="alert" style={{ "backgroundColor": "#007bff" }}>
                     <Alert.Heading>{this.state.alertMessage}</Alert.Heading>
                     <hr />
                     <div className="d-flex justify-content-end">
@@ -358,7 +383,7 @@ class Network extends React.Component {
                                     <Tabs id="uncontrolled-tab-example">
                                         <Tab eventKey="chat" title="Chat">
                                             <ul id="ul_chat">
-                                                <SimpleChatItem messageHistory={this.state.messageHistory} userId={this.state.userId}></SimpleChatItem>
+                                                <SimpleChatItem messageHistory={this.state.messageHistory} userId={this.state.user._id}></SimpleChatItem>
                                             </ul>
                                             <div id="row_chat" className="row">
                                                 <div className="col">
@@ -380,8 +405,8 @@ class Network extends React.Component {
                     </div>
                 </div>
                 <Modal
-                    data-backdrop="static"
-                    data-keyboard="false"
+                    backdrop="static"
+                    keyboard="false"
                     show={this.state.modalShow}
                 >
                     {/* <form id="test" onSubmit={(e) => {this.searchFriend(e)}}> */}
@@ -389,7 +414,7 @@ class Network extends React.Component {
                     <Modal.Body>
                         <h4>Search with profile name:</h4>
                         {/* <form id="test" onSubmit={(e) => {this.searchFriend(e)}}> */}
-                            <input id="friend_input" type="text" style={{ "width": "100%" }}></input>
+                        <input id="friend_input" type="text" style={{ "width": "100%" }}></input>
                         {/* </form> */}
                     </Modal.Body>
                     <Modal.Footer>

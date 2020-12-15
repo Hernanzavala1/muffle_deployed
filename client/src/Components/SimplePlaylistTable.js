@@ -42,13 +42,18 @@ class SimplePlaylistTable extends React.Component{
                 <tr id='playlist-row'>
                     {cells}
                     <div id='row-options'>
-                        <i onClick={() => {this.props.updateSong(r.uri); this.props.playSong(r)}} className = "fas fa-play-circle" style={{ "paddingRight":"1rem","fontSize": "2rem", "color": "white", "cursor": "pointer"}}></i>
+                        <i onClick={() => {this.handler(r)}} className = "fas fa-play-circle" style={{ "paddingRight":"1rem","fontSize": "2rem", "color": "white", "cursor": "pointer"}}></i>
                     </div>
                 </tr>
             )
         }
     }
-
+    handler=(r)=>{
+        var songObj ={song:r.uri, songObj:r}
+        sessionStorage.setItem('songInfo', JSON.stringify( songObj))
+        this.props.updateSong();
+        this.props.playSong()
+    }
     renderCell(c){
         return(
             <td className="table-cell">

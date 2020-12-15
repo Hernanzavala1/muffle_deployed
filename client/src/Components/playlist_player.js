@@ -14,8 +14,8 @@ class playlist_player extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            user:this.props.user,
-            playlist: null,
+            user: this.props.user,
+            playlist: this.props.currentPlaylist,
             isLoading: true,
             modalShow: false,
             friends: [],
@@ -23,45 +23,86 @@ class playlist_player extends React.Component {
             checked: []
         }
     }
-    componentDidMount() {
-        document.getElementById("app").style.height = "calc(100vh - 90 px)";
+ 
+    componentDidMount () {
+        console.log("we have mounteed the component !!!")
         let playlistId = this.props.match.params.id
+           if( this.reloadState(playlistId)){
+               return;
+           }
+        
+        document.getElementById("app").style.height = "calc(100vh - 90 px)";
         axios.post('/auth/getPlaylist', { playlistId: playlistId }).then(res => {
             // this.setState({ playlist: res.data.playlist })
             if (this.state.user != null) {
-            let temp = []
-            let requests = this.getFriends(this.state.user);
-            axios.all(requests).then(axios.spread((...responses) => {
-              for (var i = 0; i < responses.length; i++) {
-                temp.push(responses[i].data.user)
-              }
-              let length = temp.length;
-              var arr = Array(length).fill(false);
-              this.setState({ isLoading: false, checked: arr, friends: temp,playlist: res.data.playlist },()=>{
-                this.props.updatePlaylist(res.data.playlist);
-              })
-            })).catch(errors => {
-              console.log(errors)
-            })
-        }
-          
+                console.log("")
+                let temp = []
+                let requests = this.getFriends(this.state.user);
+                axios.all(requests).then(axios.spread((...responses) => {
+                    for (var i = 0; i < responses.length; i++) {
+                        temp.push(responses[i].data.user)
+                    }
+                    let length = temp.length;
+                    var arr = Array(length).fill(false);
+                    sessionStorage.setItem('playlistInfo', JSON.stringify(res.data.playlist))
+                    this.props.updatePlaylist();
+                    this.setState({ isLoading: false, checked: arr, friends: temp, playlist: res.data.playlist })
+                })).catch(errors => {
+                    console.log(errors)
+                })
+            }
+
         }).catch(err => {
             console.log(err)
         })
 
     }
-    getFriends = (user)=>  {
+    reloadState=()=>{
+        const userInfo =sessionStorage.getItem("user");
+        const playlistInfo = sessionStorage.getItem("playlistInfo")
+        const playlistId = this.props.match.params.id
+        console.log(playlistId)
+        if(userInfo && playlistInfo){
+            const foundUser = JSON.parse(userInfo);
+            const playlist = JSON.parse(playlistInfo);
+            console.log(playlist._id)
+            if(playlistId != playlist._id){
+                return false;
+            }
+            let temp = []
+            let requests = this.getFriends(foundUser);
+            axios.all(requests).then(axios.spread((...responses) => {
+                for (var i = 0; i < responses.length; i++) {
+                    temp.push(responses[i].data.user)
+                }
+                let length = temp.length;
+                var arr = Array(length).fill(false);
+                this.setState({ user: foundUser, playlist: playlist, isLoading: false, checked: arr, friends: temp },()=>{
+                    return true;
+                })
+            })).catch(errors => {
+                console.log(errors)
+            })
+            
+        }
+        else{
+            return false;
+        }
+           return true;
+    }
+
+    
+    getFriends = (user) => {
         // console.log("getting friends")
         let requests = []
-        
+
         var i = 0;
         for (i; i < user.friends.length; i++) {
-          console.log(user.friends[i])
-          requests.push(axios.post('/auth/getUser', { userId: user.friends[i].friendId }))
+            requests.push(axios.post('/auth/getUser', { userId: user.friends[i].friendId }))
         }
         return requests
-      
-      }
+
+    }
     handleModal(e, value) {
         e.preventDefault();
         // W3C model
@@ -69,12 +110,12 @@ class playlist_player extends React.Component {
         var arr = Array(length).fill(false);
         if (!value) {
             this.setState({ modalShow: value, shareWith: [], checked: arr }, () => {
-                console.log("we are opening the modal? ", value)
+                // console.log("we are opening the modal? ", value)
             })
         }
         else {
             this.setState({ modalShow: value }, () => {
-                console.log("we are opening the modal? ", value)
+                // console.log("we are opening the modal? ", value)
             })
         }
 
@@ -89,12 +130,12 @@ class playlist_player extends React.Component {
             tempArr.push(id);
             checked[index] = true;
             this.setState({ shareWith: tempArr, checked: checked }, () => {
-                console.log("the state should have been updated by now")
+                // console.log("the state should have been updated by now")
 
             })
         }
         else {
-            console.log("deleting it from the array")
+            // console.log("deleting it from the array")
             tempArr.splice(tempArr.indexOf(id), 1)
             checked[index] = false;
             this.setState({ shareWith: tempArr, checked: checked })
@@ -149,7 +190,7 @@ class playlist_player extends React.Component {
                                         <th id="column_title" scope="col">Time</th>
                                     </tr>
                                 </thead>
-                                <SimplePlaylistTable updateSong={this.props.updateSong} playSong={ this.props.playSong}  playlists={playlist.songs}></SimplePlaylistTable>
+                                <SimplePlaylistTable updateSong={this.props.updateSong} playSong={this.props.playSong} playlists={playlist.songs}></SimplePlaylistTable>
                             </table>
                         </div>
                     </div>

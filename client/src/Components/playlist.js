@@ -12,6 +12,8 @@ import { Button, Modal } from 'react-bootstrap'
 class Playlist extends React.Component {
   constructor(props) {
     super(props)
+    // axios.defaults.baseURL= "http://localhost:5000"
+
     this.state = {
       user: null,
       playlist: this.props.playlist,
@@ -21,10 +23,10 @@ class Playlist extends React.Component {
       checked: []
     }
   }
-  componentDidMount=  ()=> {
+  componentDidMount=  () => {
     // console.log((this.state.friends).length)
-
-    axios.post('/auth/getUser', { userId: this.props.userID }).then((res) => {
+    console.log("storage user id : ", this.props.userID)
+    axios.post('/auth/getUser', { userId : this.props.userID }).then((res) => {
       let temp = []
       let requests = this.getFriends(res.data.user);
       axios.all(requests).then(axios.spread((...responses) => {
@@ -63,7 +65,9 @@ class Playlist extends React.Component {
     axios.post('/auth/addPlaylist', { userId: this.props.userID, playlistId: this.props.playlist._id })
       .then(res => {
         console.log("added to the database")
-        console.log(res.data)
+        console.log(res.data.user)
+        sessionStorage.setItem('user', JSON.stringify(res.data.user))
+        this.props.updateUser(res.data.user)
       })
       .catch(error => {
         console.log(error)
@@ -380,7 +384,7 @@ class Playlist extends React.Component {
                       onClick={(e) => { this.checked(e, friend._id, index) }}
                     />
                   </ListItemIcon>
-                  {friend.profileName}
+                  {friend.profileName} 
                 </ListItem>
 
               ))}

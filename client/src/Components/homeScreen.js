@@ -9,12 +9,23 @@ import SimplePlaylistList from './SimplePlaylistList'
 class homeScreen extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-          userId:this.props.userId, 
-          playlists:[],
-          undo:[],
-          redo:[]
+        // var stored = JSON.parse(sessionStorage.getItem("homeState"))
+        // if(stored){
+
+        // }
+        this.state =  {
+            userId:this.props.userId, 
+            playlists:[],
+            undo:[],
+            redo:[],
+            islocalStorage:false
         }
+        console.log(this.state)
+
+        // window.onbeforeunload = (e)=>{
+        //     console.log("we are about to refresh here ")
+        //     this.saveState(e)
+        //   }
       }
     undoCallback = (func) => {
         var temp = this.state.undo;
@@ -47,19 +58,27 @@ class homeScreen extends React.Component {
         redoTemp.splice(redoTemp.length, 1);
         this.setState({redo: redoTemp});
     }
-    componentDidMount() {
+    componentDidMount=()=> {
         document.getElementById("app").style.height = "calc(100vh - 90px)";
         console.log("before the post")
+        var stored = JSON.parse(sessionStorage.getItem("homeState"))
+        if(stored){
+            this.setState(stored,()=>{
+                console.log(this.state)
+            })
+            return;
+        }
         axios.post('/auth/homePlaylists', {}).then(res=>{
             console.log("in the home screen ")
             // console.log(res.data.playlist)
             let temp = res.data.playlist.filter(function(playlist) {
                 return playlist.public;
             })
-            this.setState({playlists: temp})
+            this.setState({playlists: temp,islocalStorage:true})
         }).catch(err=>{
             console.log(err)
-        })
+        })  
+    
     }
     undoHandler = (e) => {
         if (e.keyCode === 90 && e.ctrlKey)
@@ -69,12 +88,18 @@ class homeScreen extends React.Component {
         if (e.keyCode === 89 && e.ctrlKey)
             this.redo();
     }
-    componentDidUpdate() {
+    componentDidUpdate=()=> {
+        console.log("we have updated the componernt")
         document.removeEventListener('keydown', this.undoHandler);
         document.addEventListener('keydown', this.undoHandler);
         document.removeEventListener('keydown', this.redoHandler);
         document.addEventListener('keydown', this.redoHandler);
+        this.saveState()
     }
+    saveState =()=>{
+        console.log("we are refreshing ")
+        sessionStorage.setItem("homeState",JSON.stringify(this.state))
+      }
     componentWillUnmount() {
         document.removeEventListener('keydown', this.redoHandler);
         document.removeEventListener('keydown', this.undoHandler);
@@ -88,7 +113,7 @@ class homeScreen extends React.Component {
                             <h2 className='library-labels'> Recommended for You</h2>
                         </div>
                         <div className="col">
-                            <SimplePlaylistList list={this.state.playlists} userID={this.props.userId} undoCallback={this.undoCallback} redoCallback={this.redoCallback}></SimplePlaylistList>
+                            <SimplePlaylistList updateUser={this.props.updateUser} list={this.state.playlists} userID={this.state.userId} undoCallback={this.undoCallback} redoCallback={this.redoCallback}></SimplePlaylistList>
                         </div>
 
                     </div>
@@ -97,7 +122,7 @@ class homeScreen extends React.Component {
                             <h2 className='library-labels'>Playing Right Now</h2>
                         </div>
                         <div className="col">
-                            <SimplePlaylistList list={this.state.playlists} userID={this.props.userId} undoCallback={this.undoCallback} redoCallback={this.redoCallback}></SimplePlaylistList>
+                            <SimplePlaylistList updateUser={this.props.updateUser} list={this.state.playlists} userID={this.state.userId} undoCallback={this.undoCallback} redoCallback={this.redoCallback}></SimplePlaylistList>
                         </div>
                     </div>
                 </div>

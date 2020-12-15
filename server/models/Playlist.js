@@ -10,8 +10,9 @@ var PlaylistSchema = new mongoose.Schema({
         title: String,
         artist: String,
         duration: String,
-        uri:String, 
-        image:String
+        uri: String,
+        spotifyURI: String,
+        image: String
     }],
     likes: Number,
     socketId: String,
