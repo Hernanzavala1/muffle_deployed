@@ -38,6 +38,7 @@ class create_playlist extends React.Component {
             playlistName: '',
             edit: false,
             playlist: null,
+            ableToSave: false,
             undoStack: [],
             redoStack: [],
             isUndo: false
@@ -227,11 +228,18 @@ class create_playlist extends React.Component {
             document.getElementById("save-playlist-container").childNodes[0].style.color='#0056b3'
             document.getElementById("save-playlist-container").childNodes[1].style.color='#0056b3'
         }
+        else {  // Enable
+            document.getElementById("save-playlist-container").style.pointerEvents='auto'
+            document.getElementById("save-playlist-container").childNodes[0].style.color='#007bff'
+            document.getElementById("save-playlist-container").childNodes[1].style.color='#007bff'
+        }
     }
     
     updatePlaylist = () => {
         let playlistId = this.props.match.params.id
         axios.post('/auth/updatePlaylist', { playlistId: playlistId, playlistName: this.state.playlistName, songs: this.state.playlistSongs }).then((res) => {
+            sessionStorage.setItem('playlistInfo', JSON.stringify(res.data.playlist))
+            this.props.updatePlaylist();
             this.props.history.push('/library')
         }).catch((err) => {
             console.log(err)

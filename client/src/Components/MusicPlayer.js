@@ -229,7 +229,8 @@ class MusicPlayer extends React.Component {
     updateTimeline = () => {
         var progress = document.getElementsByClassName("progress-bar")[0];
         var percent = (this.song.currentTime / this.song.duration) * 100;
-        progress.style.width = percent + "%";
+        if (progress != null)
+            progress.style.width = percent + "%";
         if (percent == 100) {
             this.next();
         }
@@ -329,10 +330,20 @@ class MusicPlayer extends React.Component {
     componentDidUpdate =(prevProps, prevState, snapshot)=>{
         
     }
+    componentWillUnmount() {
+        if (this.props.accessToken) {
+            player2.pause();
+            clearInterval(timeUpdate);
+        }
+        else if (this.state.play) {
+            this.song.pause();
+        }
+    }
     render() {
         let bool = this.props.currentPlaylist.public;
         let id = this.props.currentPlaylist._id;
         let image = this.state.playlist[this.state.currentSong];
+        
         if (image == null)
             image = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
         else
@@ -340,7 +351,7 @@ class MusicPlayer extends React.Component {
         var Child;
         if (id === undefined) {
             Child = (
-                <Link to={{ pathname: `/home`, state: { source: '/home' } }} id="goBackLink" ><label id="playlist_back">Back to Playlist</label></Link>
+                <Link to={{ pathname: '#', state: { source: '/home' } }} onClick={ (e) => e.preventDefault() } id="goBackLink" ><label id="playlist_back" style={{cursor: "default", color: "grey"}}>Back to Playlist</label></Link>
             )
         }
         else if (bool) {
@@ -369,7 +380,7 @@ class MusicPlayer extends React.Component {
                     </div>
                 </div>
                 <div className="Player_btns">
-                    <input type="range" min="0" max="100" class="slider" id="volume" onInput={this.updateVolume}></input>
+                    <input type="range" min="0" max="100" defaultValue = "20" class="slider" id="volume" onInput={this.updateVolume}></input>
                     <div className="progress">
                         <div className="progress-bar" role="progressbar" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>

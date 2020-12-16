@@ -8,7 +8,7 @@ class Login extends React.Component {
 
   constructor(props) {
     super(props);
-    // axios.defaults.baseURL= "http://localhost:5000"
+   
     this.onChangeEmail = this.onChangeEmail.bind(this);
     this.onChangePassword = this.onChangePassword.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
@@ -105,9 +105,7 @@ class Login extends React.Component {
              })
             .catch(error => {
               console.log(error)
-              if(error.status === 401) {
                 this.setState({ message: 'Login failed. Username or password do not match.'})
-              }
             });
   }
 
@@ -141,11 +139,11 @@ class Login extends React.Component {
               <input type="password" className="form-control" required value={this.state.password} onChange={this.onChangePassword} placeholder="Password" name="password" />
             </div>
             <div className='row justify-content-center'  style={{paddingTop: "20px"}}>
-              <div className="col ">
+              {/* <div className="col ">
                 <Link>
                   Password reset?
                 </Link>
-              </div>
+              </div> */}
               <div className="col">
               <button className="btn btn-lg btn-primary btn-block" type="submit">Login</button>
               </div>

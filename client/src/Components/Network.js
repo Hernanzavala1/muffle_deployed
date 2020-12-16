@@ -14,6 +14,7 @@ import Alert from 'react-bootstrap/Alert'
 import io from 'socket.io-client';
 var socket = io()
 
+
 class Network extends React.Component {
 
     constructor(props) {
@@ -64,9 +65,8 @@ class Network extends React.Component {
         if (this.props.location.state) {
             this.setState({ alertMessage: "That user doesn't exist!", alertShow: true })
         }
-
         // this.interval = setInterval(() => this.reLoadUser, 6000);
-        this.interval=setInterval(this.reLoadUser, 100000)
+        this.interval=setInterval(this.reLoadUser, 6000)
     }
     reLoadUser = () => {
         axios.post('/auth/getUser', { userId: this.state.user._id }).then(res => {
@@ -241,7 +241,10 @@ class Network extends React.Component {
                 console.log(res.data)
                 sessionStorage.setItem('user', JSON.stringify(res.data.user))
                 this.props.updateUser(res.data.user)
-                this.setState({ user: res.data.user, friends: [] }, () => this.updateFriendsList())
+                this.setState({ user: res.data.user, friends: [], currentFriend: null, messageHistory: [], theirPlaylists: [] }, () => {
+                    document.getElementById("text_input").disabled = true
+                    this.updateFriendsList()
+                })
             })
             .catch(error => {
                 console.log(error)

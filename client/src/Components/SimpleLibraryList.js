@@ -11,16 +11,18 @@ class SimpleLibraryList extends React.Component{
             updated: false
         }
     }
+  
     updateLibrary = () => {
-        this.setState({library: this.props.list});
-        this.setState({updated: true});
+        this.setState({library: this.props.list, updated: true});
+        // this.setState({updated: true});
     }
     updateUpd = () => {
         this.setState({updated: false});
     }
     render(){
+        console.log("we are rendering here")
         return (
-            this.state.library.map((p, index) => (<LibraryCard updateUser={this.props.updateUser} playlist={p} user={this.props.user} updated={this.state.updated} updateUpd={this.updateUpd} userId={this.props.userId} library={this.state.library} updateLibrary={this.updateLibrary}></LibraryCard>))
+            this.props.list.map((p, index) => (<LibraryCard updateUser={this.props.updateUser} playlist={p} user={this.props.user} updated={this.state.updated} updateUpd={this.updateUpd} userId={this.props.userId} library={this.state.library} updateLibrary={this.updateLibrary} deletePlaylist={this.props.deletePlaylist} deletePlaylistFromLibrary ={this.props.deletePlaylistFromLibrary}></LibraryCard>))
         )
     }
 }

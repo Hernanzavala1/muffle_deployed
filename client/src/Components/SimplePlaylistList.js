@@ -7,22 +7,12 @@ class SimplePlaylistList extends React.Component{
     constructor(props){
         super(props)
     }
- 
-    // render(){
-    //     return (
-    //         <ul id="playlist-list">
-    //             {
-    //                 this.props.list.map((p) => (<li onClick={()=>{this.props.updatePlaylist(p)}} className="li_playlists"><Link  to={`/publicPlayer/${p._id}`}><Playlist   playlist={p} userID={this.props.userID}></Playlist></Link></li>))
-    //             }
-    //         </ul>
-    //     )
-    // }
+
     render(){
         return (
             <ul id="playlist-list">
                 {
                     this.props.list.map((p) => (<li className="li_playlists"><Playlist updateUser={this.props.updateUser} playlist={p} userID={this.props.userID} undoCallback={this.props.undoCallback} redoCallback={this.props.redoCallback}></Playlist></li>))
-                    // this.props.list.map((p) => (<li className="li_playlists"><Link  to={`/publicPlayer/${p._id}`}><Playlist   playlist={p} userID={this.props.userID}></Playlist></Link></li>))
                 }
             </ul>
         )

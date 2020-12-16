@@ -14,27 +14,39 @@ class Library extends React.Component {
 
     this.state = {
         userId: this.props.userId,
-        user: null,
+        user: this.props.user,
         isLoading: true
     }
   }
 
-  componentDidMount() {
+  componentDidMount=()=> {
+    console.log("rendering library again")
     document.getElementById("app").style.height = "calc(100vh - 90px)";
     const loggedInUser = sessionStorage.getItem("user");
     if (loggedInUser) {
         const foundUser = JSON.parse(loggedInUser);
         this.setState({ user:foundUser,isLoading: false })
-        return;
+        
     }
-    // axios.post('/auth/getUser', {userId:this.state.userId}).then(res=>{
-    //     console.log(res.data.user)
-    //     console.log(res.data.user.library)
-    //     this.setState({user: res.data.user})
-    //     this.setState({isLoading: false})
-    // }).catch(err=>{
-    //     console.log(err)
-    // })
+  }
+
+
+  deletePlaylist = (playlist) => {
+      var addedPlaylists = []
+      Object.assign(addedPlaylists, this.state.user.addedPlaylists)
+      addedPlaylists.splice(addedPlaylists.indexOf(playlist), 1)
+
+      axios.post('/auth/updateAddedPlaylists', {userId: this.state.user._id, addedPlaylists: addedPlaylists}).then(res=>{
+            sessionStorage.setItem('user', JSON.stringify(res.data.user))
+            this.props.updateUser()
+        }).catch(err=>{
+            console.log(err)
+        })
+  }
+  deletePlaylistFromLibrary= ()=>{
+    this.setState({user:this.props.user, isLoading:false},()=>{
+        console.log("done re rendering library")
+    })
   }
  
   render() {
@@ -58,13 +70,13 @@ class Library extends React.Component {
                             </div>
                         </div>
                         <div className='playlists-cards'>
-                            <SimpleLibraryList updateUser={this.props.updateUser} list={this.state.user.library} user={this.state.user} userId={this.state.userId}></SimpleLibraryList>
+                            <SimpleLibraryList deletePlaylistFromLibrary ={this.deletePlaylistFromLibrary} updateUser={this.props.updateUser} list={this.state.user.library} user={this.state.user} userId={this.state.userId}></SimpleLibraryList>
                         </div>
                     </div>
                     <div className='playlists'>
                         <h2 className="library-labels">Added Playlists</h2>
                         <div className='playlists-cards'>
-                            <SimpleLibraryList updateUser={this.props.updateUser} list={this.state.user.addedPlaylists} user={this.state.user} userId={this.state.userId}></SimpleLibraryList>
+                            <SimpleLibraryList updateUser={this.props.updateUser} list={this.state.user.addedPlaylists} user={this.state.user} userId={this.state.userId} deletePlaylist={this.deletePlaylist}></SimpleLibraryList>
                         </div>
                     </div>
                 </div>

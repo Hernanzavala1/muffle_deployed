@@ -146,18 +146,52 @@ class playlist_player extends React.Component {
     sharePlaylist = (e) => {
         e.preventDefault()
         this.state.shareWith.map((friendId) => {
-            axios.post('/auth/addPlaylist', { userId: friendId, playlistId: this.state.playlist._id }).then(() => {
-                console.log("succesfully added to ", friendId)
-            }).catch()
+            for(var i = 0; i < this.state.friends.length; i++) {
+                if(friendId === this.state.friends[i]._id) {
+                  var friend = this.state.friends[i]
+                  if(friend.library.includes(this.state.playlist._id) || friend.addedPlaylists.includes(this.state.playlist._id)) {
+                    break
+                  }
+                  else {
+                    axios.post('/auth/addPlaylist', { userId: friendId, playlistId: this.state.playlist._id }).then(() => {
+                      console.log("succesfully added to ", friendId)
+                    }).catch()
+                  }
+                }
+              }
         })
         console.log("we finished all of the friends list")
         this.setState({ modalShow: false, shareWith: [], checked: [] })
 
     }
+    handleEditButton = (e) => {
+        e.preventDefault()
+
+        if(this.state.playlist.userID === this.state.user._id) {
+            this.props.history.push({
+                pathname: `/edit/${this.state.playlist._id}`,
+                state: this.state.user._id
+            })
+        }
+        else {
+            return
+        }
+    }
     render() {
         if (this.state.isLoading) {
             return <div>Loading...</div>;
         }
+
+        var cursor, opacity;
+        if(this.state.playlist.userID === this.state.user._id) {
+            cursor = "pointer"
+            opacity = "100%"
+        }
+        else {
+            cursor = "not-allowed"
+            opacity = "40%"
+        }
+
         var playlist = this.state.playlist;
 
         return (
@@ -174,7 +208,7 @@ class playlist_player extends React.Component {
                     </div>
                     <div className="col justify-content:space-between">
                         <div id="playlist-options">
-                            <Link to={`/edit/${playlist._id}`}> <i style={{ "fontSize": "2.5rem", "color": "white", "marginRight": "35px" }} className="fas fa-pen-square"></i></Link>
+                            <Link onClick={(e) => { this.handleEditButton(e)}}> <i style={{ "fontSize": "2.5rem", "color": "white", "marginRight": "35px", "cursor":`${cursor}`, "opacity":`${opacity}` }} className="fas fa-pen-square"></i></Link>
                             <Link onClick={(e) => { this.handleModal(e, true) }} style={{ textDecoration: 'none' }}> <i className="fa fa-share-alt" style={{ "fontSize": "2.5rem", "color": "white" }}></i></Link>
                         </div>
                     </div>

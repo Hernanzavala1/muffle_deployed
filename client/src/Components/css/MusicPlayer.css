@@ -96,3 +96,6 @@ polygon {
     justify-content: center;
     flex: 0 0 250px;
 }
+#playlist_back {
+    cursor: pointer;
+}

@@ -42,7 +42,7 @@ class NavBar extends React.Component {
         }
     }
     displayPicture = () => {
-        if(this.props.user) {
+        if(this.props.user && this.props.user.profilePicture) {
             return (
                 <img src={this.props.user.profilePicture} id="mini-pic"></img>
             )
@@ -72,12 +72,12 @@ class NavBar extends React.Component {
                     <Link id="network-link" to={this.props.userID != "" ? '/network' : '#'}>
                         <li className="Nav_item" style={{marginRight: "40px"}}>Network</li>
                     </Link>
-                    <i className="fas fa-search" style={{color: "whitesmoke"}}></i>
+                    {/* <i className="fas fa-search" style={{color: "whitesmoke"}}></i>
                     <li className="Nav_item">
                         <Form>
                             <Form.Control type="text" placeholder="Search"/>
                         </Form>
-                    </li>
+                    </li> */}
                 </ul>
                 <div style={{height: "60px", marginRight: "100px",  alignContent: "center", justifyContent:"center", display:"flex", marginTop: "10px", flexShrink: 0}}>
                     {this.props.user && <label style={{"font-size":"1.5em", "color":"whitesmoke", "margin-right":"20px"}}>Welcome, {this.props.user.profileName}</label>}

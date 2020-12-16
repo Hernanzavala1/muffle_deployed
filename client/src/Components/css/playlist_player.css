@@ -105,10 +105,12 @@ max-height: 50vh;
     color: #0056b3 !important;
 }
 #lyrics-label{
-    overflow-y: scroll;
+    overflow-y: auto;
     max-height: 35vh;
-    word-break: break-all;
+    word-break: break-word;
+    background-color: black;
     color: white;
     font-size: 1.2rem;
+    font-weight: bold;
     white-space: pre-wrap
 }

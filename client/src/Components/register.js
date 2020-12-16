@@ -35,10 +35,15 @@ class register extends React.Component {
   onChangePassword(e) {
     var password = document.getElementById("password"), confirm_password = document.getElementById("confirm_password");
     confirm_password.setCustomValidity('');
+    password.setCustomValidity('');
 
     this.setState({
       password: e.target.value
     });
+
+    if(password.value.length < 8) {
+      password.setCustomValidity("Passwords Too Short! (At least 8 characters)");
+    }
 
     if (password.value != confirm_password.value) {
       document.getElementById("confirm_password").setCustomValidity("Passwords Don't Match");
@@ -78,6 +83,15 @@ class register extends React.Component {
     axios.post('/auth/register', { email, password, profileName })
       .then(res => {
         console.log(res.data)
+        if(res.data.user === null){
+          console.log("user exists !")
+          sessionStorage.removeItem("user")
+          this.setState({ message: 'Registration failed'})
+          return;
+          // this.props.history.push({
+          //   pathname: '/'
+          // })
+        }
         sessionStorage.setItem('user', JSON.stringify(res.data.user))
         this.props.updateUser()
         this.setState({ message: '' })

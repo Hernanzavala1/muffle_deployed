@@ -76,10 +76,20 @@ class profileScreen extends React.Component {
             this.setState({ modalShow: false, modalMessage: "", field: "", alertMessage: "You must enter a valid password!", alertShow: true })
             return
         }
+        if(fieldToUpdate.length < 8) {
+            this.setState({ modalShow: false, modalMessage: "", field: "", alertMessage: "You must enter a valid password! (At least 8 characters)", alertShow: true })
+            return
+        }
         axios.post('/auth/updatePassword', { userId: this.state.userId, password: fieldToUpdate }).then(res => {
+            if(res.data.user !== null ){
             sessionStorage.setItem('user', JSON.stringify(res.data.user))
                 this.props.updateUser(res.data.user)
             this.setState({ modalShow: false, modalMessage: "", field: "", alertMessage: "Password updated.", alertShow: true })
+            return;
+            }
+            else {
+            this.setState({ modalShow: false, modalMessage: "", field: "", alertMessage: "Password not updated.", alertShow: true })
+            }
         }).catch(err => {
             console.log(err)
         })
@@ -197,7 +207,7 @@ class profileScreen extends React.Component {
                             <div id="profile-options-container">
                                 <div id="image-container">
                                     {/* <img src="/assets/logo.jpg" id="pro_pic"></img> */}
-                                    {this.state.user && <img id="pro_pic" img-src alt="Girl in a jacket" src={this.state.user.profilePicture} style={{ "border": "5px solid", "width": "220px", "height": "238px" }}></img>}
+                                    {this.state.user && <img id="pro_pic" src={this.state.user.profilePicture} style={{ "border": "5px solid", "width": "220px", "height": "238px" }}></img>}
                                     <form onSubmit={this.changeImage}>
                                         <div className="row" style={{ "align-items": "center" }}>
                                             <label for="img" style={{ "color": "#007bff", "font-size": "1.5rem", "padding-right": "20px" }}>Select image:</label>

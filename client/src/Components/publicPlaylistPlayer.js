@@ -13,10 +13,10 @@ import Checkbox from '@material-ui/core/Checkbox';
 import { Button, Modal } from 'react-bootstrap'
 import Tabs from 'react-bootstrap/Tabs'
 import Tab from 'react-bootstrap/Tab'
-import GeniusFetcher from 'genius-lyrics-fetcher';
 import io from 'socket.io-client';
 var socket = io()
-const client = new GeniusFetcher.Client('zvhzjfMVoloDm_8z6fNJADaVx2dud5H3Xn_g0btOZFh3FpTJhnoinEYyZYddlGrF');
+
+var lyrics = require("apiseeds-lyrics");
 
 class publicPlaylistPlayer extends React.Component {
   constructor(props) {
@@ -268,12 +268,6 @@ class publicPlaylistPlayer extends React.Component {
   }
 
   updateLikes = (likes) => {
-    console.log("In likes")
-    console.log("likes: ", this.state.playlist.likes);
-    if (likes < 0) {
-      likes = 0;
-    }
-
     axios.post('/auth/updateLikes', { playlistId: this.state.playlist._id, likes: likes })
       .then(res => {
         console.log(res.data)
@@ -328,9 +322,19 @@ class publicPlaylistPlayer extends React.Component {
   sharePlaylist = (e) => {
     e.preventDefault()
     this.state.shareWith.map((friendId) => {
-      axios.post('/auth/addPlaylist', { userId: friendId, playlistId: this.state.playlist._id }).then(() => {
-        console.log("succesfully added to ", friendId)
-      }).catch()
+      for(var i = 0; i < this.state.friends.length; i++) {
+        if(friendId === this.state.friends[i]._id) {
+          var friend = this.state.friends[i]
+          if(friend.library.includes(this.state.playlist._id) || friend.addedPlaylists.includes(this.state.playlist._id)) {
+            break
+          }
+          else {
+            axios.post('/auth/addPlaylist', { userId: friendId, playlistId: this.state.playlist._id }).then(() => {
+              console.log("succesfully added to ", friendId)
+            }).catch()
+          }
+        }
+      }
     })
     console.log("we finished all of the friends list")
     this.setState({ modalShow: false, shareWith: [], checked: [] })
@@ -370,24 +374,12 @@ class publicPlaylistPlayer extends React.Component {
       profileName: this.state.user.profileName
     });
   }
-  getLyrics = (key) => {
-    if(key === "lyrics") {
-      console.log("test", this.props.currentSongInfo)
-      if(this.props.currentSongInfo !== null) {
-        client.fetch(this.props.currentSongInfo.currentName, this.props.currentSongInfo.currentArtist).then(res => {
-          console.log(res)
-          this.setState({ lyrics: res.lyrics})
-        }).catch(err => this.setState({ lyrics: "Unable to find lyrics for " + this.props.currentSongInfo.currentName}))
-      }
-    }
-  }
+
   render() {
     var temp;
     var songs;
 
-    // console.log("RIGHT BEFORE IF")
     if (this.state.playlist == null) {
-      // console.log("INSIDE IFFFF")
       temp = data.publicPlayer.publicPlaylist;
       songs = data.publicPlayer.publicPlaylist.playlist;
     }
@@ -432,9 +424,9 @@ class publicPlaylistPlayer extends React.Component {
             </div>
           </div>
           <div className="col" >
-            <div className="container_chat" style={{ "minHeight": "50vh", "maxHeight": "50vh", "backgroundRepeat": "no-repeat", "backgroundPosition": "center", "backgroundImage": `url(${songs[0].image})` }}>
-              {/* <div style={{ "position": "absolute", "minHeight": "100%", "minWidth": "100%", "backgroundRepeat": "no-repeat", "backgroundPosition": "center", "opacity": "0.5", "backgroundImage":`url(${songs[0].image})`}}  ></div> */}
-              <div>
+            <div id="container-chat" style={{ "minHeight": "50vh", "maxHeight": "50vh"}}>
+              <div style={{"position": "absolute", "zIndex": "0", "height": "100%", "width": "100%", "backgroundRepeat": "no-repeat", "backgroundPosition": "center", "opacity": "0.2", "backgroundImage": `url(${songs[0].image})` }}></div>
+              <div style={{"zIndex": "1", "position": "absolute", "height": "100%", "width": "100%"}}>
                 <Tabs id="uncontrolled-tab-example" defaultActiveKey={"row_chat"} onSelect={this.getLyrics}>
                   <Tab eventKey="row_chat" title="Chat">
                     <ul id="ul_chat">
@@ -451,7 +443,7 @@ class publicPlaylistPlayer extends React.Component {
                   <Tab eventKey="lyrics" title="Lyrics">
                     <div id="lyrics" className="row">
                       <div className="col">
-                        <label id="lyrics-label">{this.state.lyrics}</label>
+                        <label id="lyrics-label">{this.props.lyrics}</label>
                       </div>
                     </div>
                   </Tab>

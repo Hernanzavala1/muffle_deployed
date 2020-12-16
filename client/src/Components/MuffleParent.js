@@ -14,6 +14,7 @@ import Library from '../Components/Library'
 import Splash from '../Components/splashScreen'
 import FriendResult from '../Components/FriendResult'
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
+var lyrics = require("apiseeds-lyrics");
 
 class MuffleParent extends React.Component {
     constructor(props) {
@@ -67,6 +68,7 @@ class MuffleParent extends React.Component {
             currentSong: "",
             currentSongInfo: null,
             accessToken: "",
+            lyrics: ""
         };
         const loggedInUser = sessionStorage.getItem("user");
         const song_info = sessionStorage.getItem("songInfo");
@@ -98,11 +100,27 @@ class MuffleParent extends React.Component {
     updateCurrentSongInfo = () => {
         const song_Name = sessionStorage.getItem("songName");
         if (song_Name) {
+            console.log(song_Name)
             const songName = JSON.parse(song_Name);
+            this.getLyrics(songName)
             this.setState({ currentSongInfo: songName });
         }
         // this.setState({ currentSongInfo: song });
     }
+    getLyrics = (songName) => {
+        // if(key === "lyrics") {
+          const apikey = 'eL5ELopUmowHW0l8rznCjMQYiTeYeoGjmUnXdV4RFJlTh45t3UQ4BAGREKmkIgrp';
+              lyrics.getLyric(apikey, songName.currentArtist, songName.currentName, (response,headers) => {
+              if(response.result) {
+                var lyrics = response.result.track.name + " - " + response.result.artist.name + "\n\n" + response.result.track.text
+                this.setState({ lyrics: lyrics})
+              }
+              else {
+                this.setState({ lyrics: "Unable to find lyrics for " + songName.currentName})
+              }
+            });
+        // }
+      }
     clearState = () => {
         let empty = {
             userID: "",
@@ -140,10 +158,10 @@ class MuffleParent extends React.Component {
                     <Route path="/register" render={props => <Register {...props} updateUser={this.updateUser} updateID={this.updateUserID} />} />
                     <Route path="/network" render={props => <Network {...props} userId={this.state.userID} updateUser={this.updateUser} />}></Route>
                     <Route path="/player/:id" render={props => <Playlist_player {...props} user={this.state.user} playSong={this.playSong} updateSong={this.updateSong} updatePlaylist={this.updateCurrentPlaylist} currentPlaylist={this.state.currentPlaylist}  />}></Route>
-                    <Route path="/edit/:id" render={props => <Create_playlist {...props} updateUser={this.updateUser}  />}></Route>
-                    <Route path="/publicPlayer/:id" render={props => <PublicPlaylistPlayer {...props} userID={this.state.userID} updatePlaylist={this.updateCurrentPlaylist} updateSong={this.updateSong} playSong={this.playSong} currentSongInfo={this.state.currentSongInfo}/>}></Route>
+                    <Route path="/edit/:id" render={props => <Create_playlist {...props} updateUser={this.updateUser} updatePlaylist={this.updateCurrentPlaylist} userId={this.state.user._id} />}></Route>
+                    <Route path="/publicPlayer/:id" render={props => <PublicPlaylistPlayer {...props} userID={this.state.userID} updatePlaylist={this.updateCurrentPlaylist} updateSong={this.updateSong} playSong={this.playSong} currentSongInfo={this.state.currentSongInfo} lyrics={this.state.lyrics}/>}></Route>
                     <Route path="/createPlaylist" render={props => <Create_playlist {...props} updateUser={this.updateUser} userId={this.state.user._id} />}></Route>
-                    <Route path="/library" render={props => <Library {...props} userId={this.state.userID} updateUser={this.updateUser}  />}></Route>
+                    <Route path="/library" render={props => <Library {...props} user = {this.state.user} userId={this.state.userID} updateUser={this.updateUser}  />}></Route>
                     <Route path="/home" render={props => <HomeScreen {...props} userId={this.state.userID} updateUser={this.updateUser} />}></Route>
                     <Route path="/splash" component={Splash}></Route>
                     <Route path="/friendResult" render={props => <FriendResult {...props} />}></Route>

@@ -12,7 +12,7 @@ import { Button, Modal } from 'react-bootstrap'
 class Playlist extends React.Component {
   constructor(props) {
     super(props)
-    // axios.defaults.baseURL= "http://localhost:5000"
+  
 
     this.state = {
       user: null,
@@ -20,7 +20,8 @@ class Playlist extends React.Component {
       modalShow: false,
       friends: [],
       shareWith: [],
-      checked: []
+      checked: [],
+      dontAdd: false
     }
   }
   componentDidMount=  () => {
@@ -59,15 +60,14 @@ class Playlist extends React.Component {
   }
 
   addToLibrary = () => {
-    console.log("in addToLibrary", this.props.playlist._id);
-    console.log(this.props.playlist);
-    console.log('the user id is ', this.props.userID)
+    if(this.state.user.addedPlaylists.includes(this.state.playlist._id) || this.state.user.library.includes(this.state.playlist._id)) {
+      return
+    }
+
     axios.post('/auth/addPlaylist', { userId: this.props.userID, playlistId: this.props.playlist._id })
       .then(res => {
-        console.log("added to the database")
-        console.log(res.data.user)
         sessionStorage.setItem('user', JSON.stringify(res.data.user))
-        this.props.updateUser(res.data.user)
+        this.props.updateUser()
       })
       .catch(error => {
         console.log(error)
@@ -240,13 +240,6 @@ class Playlist extends React.Component {
     
   }
   updateLikes = (likes) => {
-
-    console.log("In likes")
-    console.log("likes: ", this.state.playlist.likes);
-    if (likes < 0) {
-      likes = 0;
-    }
-
     axios.post('/auth/updateLikes', { playlistId: this.props.playlist._id, likes: likes })
       .then(res => {
         console.log(res.data)
@@ -302,9 +295,19 @@ class Playlist extends React.Component {
   sharePlaylist = (e) => {
     e.preventDefault()
     this.state.shareWith.map((friendId) => {
-      axios.post('/auth/addPlaylist', { userId: friendId, playlistId: this.state.playlist._id }).then(() => {
-        console.log("succesfully added to ", friendId)
-      }).catch()
+      for(var i = 0; i < this.state.friends.length; i++) {
+        if(friendId === this.state.friends[i]._id) {
+          var friend = this.state.friends[i]
+          if(friend.library.includes(this.state.playlist._id) || friend.addedPlaylists.includes(this.state.playlist._id)) {
+            break
+          }
+          else {
+            axios.post('/auth/addPlaylist', { userId: friendId, playlistId: this.state.playlist._id }).then(() => {
+              console.log("succesfully added to ", friendId)
+            }).catch()
+          }
+        }
+      }
     })
     console.log("we finished all of the friends list")
     this.setState({ modalShow: false, shareWith: [], checked: [] })
@@ -335,6 +338,16 @@ class Playlist extends React.Component {
         colorD = "#007bff"
       }
     }
+    
+    var cursor, opacity;
+    if(this.state.user.addedPlaylists.includes(this.state.playlist._id) || this.state.user.library.includes(this.state.playlist._id)) {
+      cursor = "not-allowed"
+      opacity = "40%"
+    }
+    else {
+      cursor = "pointer"
+      opacity = "100%"
+    }
 
     return (
       <div>
@@ -345,7 +358,7 @@ class Playlist extends React.Component {
                 <img className="songCover" src={this.state.playlist.songs[0].image} alt="Pic 1" />
                 <div className="hoverContainer">
                   <div style={{ "marginBottom": "10px" }} className="first">
-                    <Link onClick={this.addToLibrary}><i className="fas fa-plus-circle" style={{ "marginRight": "10px", "fontSize": "2rem", "color": "white" }}></i></Link>
+                    <Link onClick={this.addToLibrary}><i className="fas fa-plus-circle" style={{ "marginRight": "10px", "fontSize": "2rem", "color": "white", "cursor":`${cursor}`, "opacity":`${opacity}` }}></i></Link>
                     <Link onClick={() => this.likePlaylist(false)}><i id={this.state.playlist._id} className="fa fa-thumbs-up" style={{ "fontSize": "2rem", "color": `${colorL}` }}></i></Link>
                   </div>
                   <div className="second">

@@ -34,25 +34,20 @@ class LibraryCard extends React.Component {
         if (JSON.stringify(this.props.playlist).length > 30)
             return
         axios.post('/auth/getPlaylist', { playlistId: this.props.playlist }).then(res => {
-            this.setState({ playlist: res.data.playlist }, function () {
-                if (this.state.playlist.songs.length < 2) {
-                    this.state.playlistImages[0, 1, 2, 3] = this.state.playlist.songs[0].image;
-                }
-                else if (this.state.playlist.songs.length < 3) {
-                    this.state.playlistImages[0, 2, 3] = this.state.playlist.songs[0].image;
-                    this.state.playlistImages[1] = this.state.playlist.songs[1].image;
-                }
-                else if (this.state.playlist.songs.length < 4) {
-                    this.state.playlistImages[0, 3] = this.state.playlist.songs[0].image;
-                    this.state.playlistImages[1] = this.state.playlist.songs[1].image;
-                    this.state.playlistImages[2] = this.state.playlist.songs[2].image;
-                }
-                else {
-                    for (var i = 0; i < 4; i++) {
-                        this.state.playlistImages[i] = this.state.playlist.songs[i].image;
+            if (res.data.playlist === null) {
+                this.props.deletePlaylist(this.props.playlist)
+                return
+            }
+            else {
+                this.setState({ playlist: res.data.playlist }, function () {
+                    var image = this.state.playlist.songs[0].image;
+                    var imageArray = [image, image, image, image];
+                    for (var i = 0; i < this.state.playlist.songs.length; i++) {
+                        imageArray[i] = this.state.playlist.songs[i].image;
                     }
-                }
-            })
+                    this.setState({ playlistImages: imageArray });
+                })
+            }
             // let length = (this.state.friends).length;
             // var arr = Array(length).fill(false);
             // this.setState({ isLoading: false, checked: arr })
@@ -66,7 +61,7 @@ class LibraryCard extends React.Component {
                     let length = temp.length;
                     var arr = Array(length).fill(false);
                     // return result
-                    this.setState({ isLoading: false,checked: arr, friends: temp})
+                    this.setState({ isLoading: false, checked: arr, friends: temp })
                 })).catch(errors => {
                     console.log(errors)
                 })
@@ -91,7 +86,18 @@ class LibraryCard extends React.Component {
     componentDidUpdate() {
         if (this.props.updated) {
             axios.post('/auth/getPlaylist', { playlistId: this.props.playlist }).then(res => {
-                this.setState({ playlist: res.data.playlist })
+                if (res.data.err) {
+                    console.log("DELETED PLAYLIST CAUGHT")
+                    return
+                }
+                this.setState({ playlist: res.data.playlist }, function () {
+                    var image = this.state.playlist.songs[0].image;
+                    var imageArray = [image, image, image, image];
+                    for (var i = 0; i < this.state.playlist.songs.length; i++) {
+                        imageArray[i] = this.state.playlist.songs[i].image;
+                    }
+                    this.setState({ playlistImages: imageArray });
+                });
                 let length = (this.state.friends).length;
                 var arr = Array(length).fill(false);
                 this.setState({ isLoading: false, checked: arr })
@@ -103,8 +109,8 @@ class LibraryCard extends React.Component {
     }
 
     removeFromLibrary = (e) => {
-        if(this.state.userId === this.state.playlist.userID) {
-            console.log("DELETING")
+        if (this.state.userId === this.state.playlist.userID) {
+            // console.log("DELETING")
             this.handleModalD(e, true)
             return
         }
@@ -125,10 +131,45 @@ class LibraryCard extends React.Component {
         this.props.updateLibrary(this.state.library);
     }
     deletePlaylist = (e) => {
+        e.preventDefault()
+
+        var library = []
+        Object.assign(library, this.state.user.library)
+        library.splice(library.indexOf(this.state.playlist._id), 1)
+
+        axios.post('/auth/deletePlaylist', { playlistId: this.state.playlist._id })
+            .then(res => {
+
+            })
+            .catch(error => {
+                console.log(error)
+            });
+        axios.post('/auth/removePlaylist', { userId: this.state.userId, library: library })
+            .then(res => {
+                sessionStorage.setItem('user', JSON.stringify(res.data.user))
+                sessionStorage.removeItem("homeState");
+                this.props.updateUser()
+                this.props.deletePlaylistFromLibrary()
+                this.props.updateLibrary()
+                this.setState({ modalShowD: false })
+            })
+            .catch(error => {
+                console.log(error)
+            });
 
     }
+    reloadUser=()=>{
+        axios.post('/auth/getUser', { userId: this.state.user._id}).then(res => {
+            sessionStorage.setItem('user', JSON.stringify(res.data.user))
+            sessionStorage.removeItem("homeState")
+            this.props.updateUser()
+            this.setState({ user: res.data.user })
+            }).catch(err => {
+                console.log(err)
+            })
+    }
     changeVisibility = () => {
-        if(this.state.userId !== this.state.playlist.userID) {
+        if (this.state.userId !== this.state.playlist.userID) {
             return
         }
 
@@ -136,6 +177,7 @@ class LibraryCard extends React.Component {
         console.log(visibility, "is the current state")
         axios.post('/auth/playlistPublic', { playlistId: this.state.playlist._id, public: !visibility }).then((res) => {
             console.log(res.data.playlist)
+            this.reloadUser()
             this.setState({ playlist: res.data.playlist }, () => {
                 console.log(" we should hsave updated the state now")
             })
@@ -191,9 +233,19 @@ class LibraryCard extends React.Component {
     sharePlaylist = (e) => {
         e.preventDefault()
         this.state.shareWith.map((friendId) => {
-            axios.post('/auth/addPlaylist', { userId: friendId, playlistId: this.state.playlist._id }).then(() => {
-                console.log("succesfully added to ", friendId)
-            }).catch()
+            for(var i = 0; i < this.state.friends.length; i++) {
+                if(friendId === this.state.friends[i]._id) {
+                  var friend = this.state.friends[i]
+                  if(friend.library.includes(this.state.playlist._id) || friend.addedPlaylists.includes(this.state.playlist._id)) {
+                    break
+                  }
+                  else {
+                    axios.post('/auth/addPlaylist', { userId: friendId, playlistId: this.state.playlist._id }).then(() => {
+                      console.log("succesfully added to ", friendId)
+                    }).catch()
+                  }
+                }
+            }
         })
         console.log("we finished all of the friends list")
         this.setState({ modalShow: false, shareWith: [], checked: [] })
@@ -201,7 +253,7 @@ class LibraryCard extends React.Component {
     }
     render() {
         if (this.state.isLoading) {
-            return <div>Loading...</div>;
+            return <div></div>;
         }
         let lock, linkTo;
         if (this.state.playlist.public) {
@@ -211,19 +263,21 @@ class LibraryCard extends React.Component {
             lock = "fa fa-lock"
             linkTo = `/player/${this.state.playlist._id}`
         }
-        var cursor, remove;
+        var cursor, remove, opacity;
         if(this.state.userId !== this.state.playlist.userID) {
             console.log(this.state.playlist.userID)
             cursor = "not-allowed"
+            opacity = "40%"
             remove = "fas fa-minus-circle"
         }
         else {
             cursor = "pointer"
+            opacity = "100%"
             remove = "fas fa-trash-alt"
         }
 
         return (
-            <div>
+            <div style={{ "margin-right": "100px" }}>
                 <Link to={{ pathname: linkTo, state: { source: '/library' } }}>
                     <div id='library-container'>
 
@@ -233,7 +287,7 @@ class LibraryCard extends React.Component {
                                     <i className={remove} style={{ "paddingRight": "1rem", "fontSize": "2rem", "color": "white" }}></i>
                                 </Link>
                                 <Link id="visibility-link" onClick={() => this.changeVisibility()} style={{ "textDecoration": 'none', "cursor":`${cursor}` }}>
-                                    <i className={lock} style={{ "fontSize": "2rem", "color": "white"}}></i>
+                                    <i className={lock} style={{ "fontSize": "2rem", "color": "white", "opacity":`${opacity}`}}></i>
                                 </Link>
                                 <Link id="share-link" style={{ textDecoration: 'none' }}>
                                     <i onClick={(e) => { this.handleModal(e, true) }} className="fa fa-share-alt" style={{ "paddingLeft": "1.5rem", "fontSize": "2rem", "color": "white", display: "block", paddingTop: "1rem" }}></i>
@@ -263,7 +317,7 @@ class LibraryCard extends React.Component {
                 <Modal
                     backdrop="static"
                     keyboard="false"
-                    show={this.state.modalShow} 
+                    show={this.state.modalShow}
                 >
                     <Modal.Header> Share playlist</Modal.Header>
                     <Modal.Body>

@@ -16,6 +16,8 @@ class homeScreen extends React.Component {
         this.state =  {
             userId:this.props.userId, 
             playlists:[],
+            popularPlaylists:[],
+            recommendedPlaylists:[],
             undo:[],
             redo:[],
             islocalStorage:false
@@ -74,11 +76,32 @@ class homeScreen extends React.Component {
             let temp = res.data.playlist.filter(function(playlist) {
                 return playlist.public;
             })
-            this.setState({playlists: temp,islocalStorage:true})
+            this.setState({playlists: temp,islocalStorage:true}, ()=>{
+                 this.loadPopularPlaylist()
+                 this.loadRecommendedPlaylist()
+            })
         }).catch(err=>{
             console.log(err)
         })  
     
+    }
+    loadPopularPlaylist=()=>{
+     var popularPlaylists = this.state.playlists.filter((playlist)=>{
+        if( playlist.likes >= 100){
+            return playlist;
+        }
+     })
+     console.log(popularPlaylists)
+     this.setState({popularPlaylists:popularPlaylists})
+    }
+    loadRecommendedPlaylist=()=>{
+        var temp = []
+        Object.assign(temp, this.state.playlists)
+        for (var i = temp.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            [temp[i], temp[j]] = [temp[j], temp[i]];
+        }
+        this.setState({recommendedPlaylists: temp})
     }
     undoHandler = (e) => {
         if (e.keyCode === 90 && e.ctrlKey)
@@ -105,24 +128,27 @@ class homeScreen extends React.Component {
         document.removeEventListener('keydown', this.undoHandler);
     }
     render() {
+        if(this.state.popularPlaylists.length ===0){
+            return (<div></div>)
+        }
         return (
             <div id="home-container">
                 <div id="scroll-container">
                     <div id="recommendedRow" className="row align-items-start">
                         <div className="col">
-                            <h2 className='library-labels'> Recommended for You</h2>
+                            <h2 className='library-labels'>Random Playlists</h2>
                         </div>
                         <div className="col">
-                            <SimplePlaylistList updateUser={this.props.updateUser} list={this.state.playlists} userID={this.state.userId} undoCallback={this.undoCallback} redoCallback={this.redoCallback}></SimplePlaylistList>
+                            <SimplePlaylistList updateUser={this.props.updateUser} list={this.state.recommendedPlaylists} userID={this.state.userId} undoCallback={this.undoCallback} redoCallback={this.redoCallback}></SimplePlaylistList>
                         </div>
 
                     </div>
                     <div id="playing_songs" className="row align-items-start">
                         <div className="col">
-                            <h2 className='library-labels'>Playing Right Now</h2>
+                            <h2 className='library-labels'>Popular Playlists</h2>
                         </div>
                         <div className="col">
-                            <SimplePlaylistList updateUser={this.props.updateUser} list={this.state.playlists} userID={this.state.userId} undoCallback={this.undoCallback} redoCallback={this.redoCallback}></SimplePlaylistList>
+                            <SimplePlaylistList updateUser={this.props.updateUser} list={this.state.popularPlaylists} userID={this.state.userId} undoCallback={this.undoCallback} redoCallback={this.redoCallback}></SimplePlaylistList>
                         </div>
                     </div>
                 </div>
